@@ -1,5 +1,5 @@
 {
-  "gitSiteUrl": "https://www.github.com/tauri-apps/tauri-log-plugin-rs/",
+  "gitSiteUrl": "https://www.github.com/tauri-apps/tauri-plugin-log/",
   "pkgManagers": {
     "rust": {
       "version": true,
@@ -13,12 +13,12 @@
     }
   },
   "packages": {
-    "tauri-log-plugin.js": {
+    "tauri-plugin-log-api": {
       "path": "./typescript",
       "manager": "javascript",
       "dependencies": ["tauri-log-plugin"]
     },
-    "tauri-log-plugin": {
+    "tauri-plugin-log": {
       "path": ".",
       "manager": "rust"
     }

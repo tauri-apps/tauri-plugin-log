@@ -8,7 +8,8 @@ When you select the version bump required, you do *not* need to consider depeden
 Use the following format:
 ```md
 ---
-"tauri-log-plugin": minor
+"tauri-plugin-log": minor
+"tauri-plugin-log-api": minor
 ---
 
 Change summary goes here
