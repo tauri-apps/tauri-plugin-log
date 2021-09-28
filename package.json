@@ -6,6 +6,7 @@
   ],
   "description": "Tauri Plugin for logging",
   "browser": "webview-dist/index.js",
+  "types": "webview-dist/index.d.ts", 
   "private": "true",
   "scripts": {
     "build": "rollup -c ./webview-src/rollup.config.js",
