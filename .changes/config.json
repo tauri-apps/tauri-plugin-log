@@ -16,7 +16,7 @@
     "tauri-plugin-log-api": {
       "path": "./typescript",
       "manager": "javascript",
-      "dependencies": ["tauri-log-plugin"]
+      "dependencies": ["tauri-plugin-log"]
     },
     "tauri-plugin-log": {
       "path": ".",
