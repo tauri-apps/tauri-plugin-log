@@ -149,7 +149,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
         "log"
     }
 
-    fn initialize(&mut self, _app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
+    fn initialize(&mut self, app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
         let config: LogConfiguration = if config.is_null() {
             Default::default()
         } else {
@@ -176,7 +176,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                         .into()
                 },
                 LogTarget::AppDir => {
-                    fern::log_file(get_log_file_path(&config, app_dir(&config)?, &self.rotation_strategy)?)?
+                    fern::log_file(get_log_file_path(&config, app_dir(&app.config()).unwrap(), &self.rotation_strategy)?)?
                         .into()
                 }
             });
