@@ -172,11 +172,18 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                 LogTarget::Stdout => fern::Output::from(std::io::stdout()),
                 LogTarget::Stderr => std::io::stderr().into(),
                 LogTarget::Folder(path) => {
+                    if !path.exists() {
+                        fs::create_dir(&path).unwrap();
+                    }
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
                 },
                 LogTarget::AppDir => {
-                    fern::log_file(get_log_file_path(&config, app_dir(&app.config()).unwrap(), &self.rotation_strategy)?)?
+                    let path = app_dir(&app.config()).unwrap();
+                    if !path.exists() {
+                        fs::create_dir(&path).unwrap();
+                    }
+                    fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
                 }
             });
