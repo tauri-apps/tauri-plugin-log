@@ -107,12 +107,11 @@ impl LoggerBuilder {
         for target in targets {
             t.push(target);
         }
-        let builder = Self {
+        Self {
             level: LevelFilter::Trace,
             targets: t,
             rotation_strategy: RotationStrategy::KeepOne,
-        };
-        builder
+        }
     }
 
     pub fn level(mut self, level: LevelFilter) -> Self {
