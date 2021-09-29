@@ -8,7 +8,6 @@ use tauri::AppHandle;
 use tauri::{
     plugin::{Plugin, Result as PluginResult},
     Invoke, Manager, Runtime,
-    api::path::app_dir
 };
 
 use std::fs::{self, File};
@@ -95,7 +94,7 @@ pub enum LogTarget {
     Stderr,
     Folder(PathBuf),
     AppDir,
-    Webview
+    Webview,
 }
 
 /// The logger.
@@ -179,9 +178,9 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                     }
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
-                },
+                }
                 LogTarget::AppDir => {
-                    let path = app_dir(&app.config()).unwrap();
+                    let path = app.path_resolver().app_dir().unwrap();
                     if !path.exists() {
                         fs::create_dir(&path).unwrap();
                     }
