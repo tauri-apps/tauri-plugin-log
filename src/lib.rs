@@ -3,10 +3,11 @@ use log::{debug, error, info, trace, warn};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use serde_repr::Deserialize_repr;
+use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::{
     plugin::{Plugin, Result as PluginResult},
-    Invoke, Runtime,
+    Invoke, Manager, Runtime,
 };
 
 use std::fs::{self, File};
@@ -92,6 +93,7 @@ pub enum LogTarget {
     Stdout,
     Stderr,
     Folder(PathBuf),
+    Webview,
 }
 
 /// The logger.
@@ -147,7 +149,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
         "log"
     }
 
-    fn initialize(&mut self, _app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
+    fn initialize(&mut self, app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
         let config: LogConfiguration = if config.is_null() {
             Default::default()
         } else {
@@ -172,6 +174,17 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                 LogTarget::Folder(path) => {
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
+                }
+                LogTarget::Webview => {
+                    let app_handle = Mutex::new(app.clone());
+
+                    fern::Output::call(move |record| {
+                        app_handle
+                            .lock()
+                            .unwrap()
+                            .emit_all("log://log", record.args())
+                            .unwrap();
+                    })
                 }
             });
         }
