@@ -5,7 +5,8 @@
     "Tauri Programme within The Commons Conservancy"
   ],
   "description": "Tauri Plugin for logging",
-  "browser": "webview-dist/index.js",
+  "browser": "webview-dist/index.min.js",
+  "module": "webview-dist/index.mjs",
   "private": "true",
   "scripts": {
     "build": "rollup -c ./webview-src/rollup.config.js",
