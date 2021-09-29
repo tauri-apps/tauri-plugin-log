@@ -36,6 +36,33 @@ export async function error(message: string): Promise<void> {
   await log(LogLevel.Error, message)
 }
 
+interface RecordPayload {
+  level: number;
+  message: string;
+}
+
 export function attachConsole() {
-  return listen('log://log', console.log)
+  return listen("log://log", (event) => {
+    const payload = event.payload as RecordPayload;
+
+    switch (payload.level) {
+      case LogLevel.Trace:
+        console.log(payload.message);
+        break;
+      case LogLevel.Debug:
+        console.debug(payload.message);
+        break;
+      case LogLevel.Info:
+        console.info(payload.message);
+        break;
+      case LogLevel.Warn:
+        console.warn(payload.message);
+        break;
+      case LogLevel.Error:
+        console.error(payload.message);
+        break;
+      default:
+        throw new Error(`unknown log level ${payload.level}`);
+    }
+  });
 }
