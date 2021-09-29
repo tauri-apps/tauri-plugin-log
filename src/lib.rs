@@ -1,8 +1,8 @@
 use byte_unit::Byte;
 use log::{debug, error, info, trace, warn};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use serde_repr::Deserialize_repr;
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::{
@@ -22,7 +22,7 @@ struct LogConfiguration {
 }
 
 /// The available verbosity levels of the logger.
-#[derive(Deserialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Clone)]
 #[repr(u16)]
 pub enum LogLevel {
     Trace = 1,
@@ -30,6 +30,12 @@ pub enum LogLevel {
     Info,
     Warn,
     Error,
+}
+
+#[derive(Debug, Serialize, Clone)]
+struct RecordPayload<'a> {
+    message: std::fmt::Arguments<'a>,
+    level: LogLevel
 }
 
 pub enum RotationStrategy {
@@ -193,7 +199,16 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                         app_handle
                             .lock()
                             .unwrap()
-                            .emit_all("log://log", record.args())
+                            .emit_all("log://log", RecordPayload {
+                                message: *record.args(),
+                                level: match record.level() {
+                                    log::Level::Trace => LogLevel::Trace,
+                                    log::Level::Debug => LogLevel::Debug,
+                                    log::Level::Info => LogLevel::Info,
+                                    log::Level::Warn => LogLevel::Warn,
+                                    log::Level::Error => LogLevel::Error,
+                                }
+                            })
                             .unwrap();
                     })
                 }
