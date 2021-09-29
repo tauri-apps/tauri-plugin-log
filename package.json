@@ -5,7 +5,8 @@
     "Tauri Programme within The Commons Conservancy"
   ],
   "description": "Tauri Plugin for logging",
-  "browser": "webview-dist/index.js",
+  "browser": "webview-dist/index.min.js",
+  "module": "webview-dist/index.mjs",
   "private": "true",
   "scripts": {
     "build": "rollup -c ./webview-src/rollup.config.js",
@@ -18,10 +19,10 @@
     "@rollup/plugin-typescript": "^8.1.0",
     "rollup": "^2.38.0",
     "rollup-plugin-terser": "^7.0.2",
-    "typescript": "^4.1.3"
+    "typescript": "^4.4.3"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.0.0-beta.4",
-    "tslib": "^2.1.0"
+    "@tauri-apps/api": "^1.0.0-beta.8",
+    "tslib": "^2.3.1"
   }
 }
