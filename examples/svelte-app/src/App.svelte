@@ -4,6 +4,8 @@
 	let message = ''
 	let level = 'info'
 
+	log.attachConsole()
+
 	function send () {
       log[level](message)
     }

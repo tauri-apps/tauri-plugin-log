@@ -35,7 +35,7 @@ pub enum LogLevel {
 #[derive(Debug, Serialize, Clone)]
 struct RecordPayload<'a> {
     message: std::fmt::Arguments<'a>,
-    level: LogLevel
+    level: LogLevel,
 }
 
 pub enum RotationStrategy {
@@ -95,11 +95,17 @@ fn log(level: LogLevel, message: String) {
     }
 }
 
+/// Targets of the logs.
 pub enum LogTarget {
+    /// Log to stdout.
     Stdout,
+    /// Log to stderr.
     Stderr,
+    /// Log to the specified folder.
     Folder(PathBuf),
-    AppDir,
+    /// Log to the specified folder, relative to the app cache directory.
+    AppDir(PathBuf),
+    /// Emit an event to the webview (`log://log`).
     Webview,
 }
 
@@ -179,15 +185,15 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                 LogTarget::Stderr => std::io::stderr().into(),
                 LogTarget::Folder(path) => {
                     if !path.exists() {
-                        fs::create_dir(&path).unwrap();
+                        fs::create_dir_all(&path).unwrap();
                     }
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
                 }
-                LogTarget::AppDir => {
-                    let path = app.path_resolver().app_dir().unwrap();
+                LogTarget::AppDir(path) => {
+                    let path = app.path_resolver().app_dir().unwrap().join(path);
                     if !path.exists() {
-                        fs::create_dir(&path).unwrap();
+                        fs::create_dir_all(&path).unwrap();
                     }
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
@@ -199,16 +205,19 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                         app_handle
                             .lock()
                             .unwrap()
-                            .emit_all("log://log", RecordPayload {
-                                message: *record.args(),
-                                level: match record.level() {
-                                    log::Level::Trace => LogLevel::Trace,
-                                    log::Level::Debug => LogLevel::Debug,
-                                    log::Level::Info => LogLevel::Info,
-                                    log::Level::Warn => LogLevel::Warn,
-                                    log::Level::Error => LogLevel::Error,
-                                }
-                            })
+                            .emit_all(
+                                "log://log",
+                                RecordPayload {
+                                    message: *record.args(),
+                                    level: match record.level() {
+                                        log::Level::Trace => LogLevel::Trace,
+                                        log::Level::Debug => LogLevel::Debug,
+                                        log::Level::Info => LogLevel::Info,
+                                        log::Level::Warn => LogLevel::Warn,
+                                        log::Level::Error => LogLevel::Error,
+                                    },
+                                },
+                            )
                             .unwrap();
                     })
                 }

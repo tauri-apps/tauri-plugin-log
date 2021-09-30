@@ -31,7 +31,28 @@ async function error(message) {
     await log(LogLevel.Error, message);
 }
 function attachConsole() {
-    return listen('log://log', console.log);
+    return listen("log://log", (event) => {
+        const payload = event.payload;
+        switch (payload.level) {
+            case LogLevel.Trace:
+                console.log(payload.message);
+                break;
+            case LogLevel.Debug:
+                console.debug(payload.message);
+                break;
+            case LogLevel.Info:
+                console.info(payload.message);
+                break;
+            case LogLevel.Warn:
+                console.warn(payload.message);
+                break;
+            case LogLevel.Error:
+                console.error(payload.message);
+                break;
+            default:
+                throw new Error(`unknown log level ${payload.level}`);
+        }
+    });
 }
 
 export { attachConsole, debug, error, info, trace, warn };
