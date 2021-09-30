@@ -1,12 +1,13 @@
 use byte_unit::Byte;
 use log::{debug, error, info, trace, warn};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use serde_repr::Deserialize_repr;
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::sync::Mutex;
 use tauri::AppHandle;
 use tauri::{
     plugin::{Plugin, Result as PluginResult},
-    Invoke, Runtime,
+    Invoke, Manager, Runtime,
 };
 
 use std::fs::{self, File};
@@ -21,7 +22,7 @@ struct LogConfiguration {
 }
 
 /// The available verbosity levels of the logger.
-#[derive(Deserialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Clone)]
 #[repr(u16)]
 pub enum LogLevel {
     Trace = 1,
@@ -29,6 +30,12 @@ pub enum LogLevel {
     Info,
     Warn,
     Error,
+}
+
+#[derive(Debug, Serialize, Clone)]
+struct RecordPayload<'a> {
+    message: std::fmt::Arguments<'a>,
+    level: LogLevel,
 }
 
 pub enum RotationStrategy {
@@ -88,10 +95,18 @@ fn log(level: LogLevel, message: String) {
     }
 }
 
+/// Targets of the logs.
 pub enum LogTarget {
+    /// Log to stdout.
     Stdout,
+    /// Log to stderr.
     Stderr,
+    /// Log to the specified folder.
     Folder(PathBuf),
+    /// Log to the specified folder, relative to the app cache directory.
+    AppDir(PathBuf),
+    /// Emit an event to the webview (`log://log`).
+    Webview,
 }
 
 /// The logger.
@@ -146,7 +161,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
         "log"
     }
 
-    fn initialize(&mut self, _app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
+    fn initialize(&mut self, app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
         let config: LogConfiguration = if config.is_null() {
             Default::default()
         } else {
@@ -169,8 +184,42 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                 LogTarget::Stdout => fern::Output::from(std::io::stdout()),
                 LogTarget::Stderr => std::io::stderr().into(),
                 LogTarget::Folder(path) => {
+                    if !path.exists() {
+                        fs::create_dir_all(&path).unwrap();
+                    }
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
+                }
+                LogTarget::AppDir(path) => {
+                    let path = app.path_resolver().app_dir().unwrap().join(path);
+                    if !path.exists() {
+                        fs::create_dir_all(&path).unwrap();
+                    }
+                    fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
+                        .into()
+                }
+                LogTarget::Webview => {
+                    let app_handle = Mutex::new(app.clone());
+
+                    fern::Output::call(move |record| {
+                        app_handle
+                            .lock()
+                            .unwrap()
+                            .emit_all(
+                                "log://log",
+                                RecordPayload {
+                                    message: *record.args(),
+                                    level: match record.level() {
+                                        log::Level::Trace => LogLevel::Trace,
+                                        log::Level::Debug => LogLevel::Debug,
+                                        log::Level::Info => LogLevel::Info,
+                                        log::Level::Warn => LogLevel::Warn,
+                                        log::Level::Error => LogLevel::Error,
+                                    },
+                                },
+                            )
+                            .unwrap();
+                    })
                 }
             });
         }

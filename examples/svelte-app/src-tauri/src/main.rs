@@ -7,7 +7,14 @@ use tauri_plugin_log::{LogTarget, LoggerBuilder};
 
 fn main() {
   tauri::Builder::default()
-    .plugin(LoggerBuilder::new([LogTarget::Folder("./logs".into()), LogTarget::Stdout]).build())
+    .plugin(
+      LoggerBuilder::new([
+        LogTarget::AppDir("./logs".into()),
+        LogTarget::Stdout,
+        LogTarget::Webview,
+      ])
+      .build(),
+    )
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
