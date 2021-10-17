@@ -5,7 +5,7 @@ authors = [ "Tauri Programme within The Commons Conservancy" ]
 edition = "2018"
 
 [dependencies]
-tauri = { git = "https://github.com/tauri-apps/tauri", commit = "acbb3ae7bb0165846b9456aea103269f027fc548" }
+tauri = { git = "https://github.com/tauri-apps/tauri", branch = "next" }
 serde = "1.0"
 serde_json = "1.0"
 serde_repr = "0.1"
