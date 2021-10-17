@@ -191,7 +191,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                         .into()
                 }
                 LogTarget::LogDir => {
-                    let path = tauri::api::path::log_dir(&app.config()).unwrap();
+                    let path = app.path_resolver().log_dir().unwrap();
                     if !path.exists() {
                         fs::create_dir_all(&path).unwrap();
                     }
