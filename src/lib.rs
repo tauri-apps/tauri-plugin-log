@@ -103,8 +103,8 @@ pub enum LogTarget {
     Stderr,
     /// Log to the specified folder.
     Folder(PathBuf),
-    /// Log to the specified folder, relative to the app cache directory.
-    AppDir(PathBuf),
+    /// Log to the OS appropriate log folder.
+    LogDir,
     /// Emit an event to the webview (`log://log`).
     Webview,
 }
@@ -190,8 +190,8 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                     fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
                         .into()
                 }
-                LogTarget::AppDir(path) => {
-                    let path = app.path_resolver().app_dir().unwrap().join(path);
+                LogTarget::LogDir => {
+                    let path = app.path_resolver().log_dir().unwrap();
                     if !path.exists() {
                         fs::create_dir_all(&path).unwrap();
                     }
