@@ -9,6 +9,9 @@
   "module": "webview-dist/index.mjs",
   "types": "webview-dist/index.d.ts", 
   "private": "true",
+   "files": [
+     "webview-dist"
+   ],
   "scripts": {
     "build": "rollup -c ./webview-src/rollup.config.js",
     "prepublishOnly": "yarn build",
