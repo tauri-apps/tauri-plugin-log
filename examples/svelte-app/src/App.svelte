@@ -1,11 +1,12 @@
+
 <script lang="ts">
 	import * as log from 'tauri-plugin-log-api'
 
 	let message = ''
 	let level = 'info'
-
+	
 	log.attachConsole()
-
+	
 	function send () {
       log[level](message)
     }
