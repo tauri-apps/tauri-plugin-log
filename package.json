@@ -7,11 +7,11 @@
   "description": "Tauri Plugin for logging",
   "browser": "webview-dist/index.min.js",
   "module": "webview-dist/index.mjs",
-  "types": "webview-dist/index.d.ts", 
+  "types": "webview-dist/index.d.ts",
   "private": "true",
-   "files": [
-     "webview-dist"
-   ],
+  "files": [
+    "webview-dist"
+  ],
   "scripts": {
     "build": "rollup -c ./webview-src/rollup.config.js",
     "prepublishOnly": "yarn build",
@@ -28,5 +28,8 @@
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-beta.8",
     "tslib": "^2.3.1"
+  },
+  "peerDependencies": {
+    "type-fest": "^2.9.0"
   }
 }
