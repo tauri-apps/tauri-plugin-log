@@ -22,7 +22,7 @@ pub use fern;
 
 const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
 const DEFAULT_ROTATION_STRATEGY: RotationStrategy = RotationStrategy::KeepOne;
-const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Trace;
+const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
 /// An enum representing the available verbosity levels of the logger.
 ///
