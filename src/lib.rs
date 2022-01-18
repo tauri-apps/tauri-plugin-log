@@ -2,31 +2,83 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
-pub use log::LevelFilter;
-use log::{debug, error, info, trace, warn};
+use fern::FormatCallback;
+use log::{debug, error, info, trace, warn, LevelFilter, Record};
 use serde::Serialize;
-use serde_json::Value as JsonValue;
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::fs::{self, File};
-use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use tauri::AppHandle;
+use std::{
+  fmt::Arguments,
+  fs::{self, File},
+  iter::FromIterator,
+  path::{Path, PathBuf},
+};
 use tauri::{
   plugin::{Plugin, Result as PluginResult},
-  Invoke, Manager, Runtime,
+  AppHandle, Invoke, Manager, Runtime,
 };
 
-const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
+pub use fern;
 
-/// The available verbosity levels of the logger.
-#[derive(Deserialize_repr, Serialize_repr, Debug, Clone)]
+const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
+const DEFAULT_ROTATION_STRATEGY: RotationStrategy = RotationStrategy::KeepOne;
+const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Trace;
+
+/// An enum representing the available verbosity levels of the logger.
+///
+/// It is very similar to the [`log::Level`], but serializes to unsigned ints instead of strings.
+#[derive(Debug, Clone, Deserialize_repr, Serialize_repr)]
 #[repr(u16)]
 pub enum LogLevel {
+  /// The "trace" level.
+  ///
+  /// Designates very low priority, often extremely verbose, information.
   Trace = 1,
+  /// The "debug" level.
+  ///
+  /// Designates lower priority information.
   Debug,
+  /// The "info" level.
+  ///
+  /// Designates useful information.
   Info,
+  /// The "warn" level.
+  ///
+  /// Designates hazardous situations.
   Warn,
+  /// The "error" level.
+  ///
+  /// Designates very serious errors.
   Error,
+}
+
+impl From<LogLevel> for log::Level {
+  fn from(log_level: LogLevel) -> Self {
+    match log_level {
+      LogLevel::Trace => log::Level::Trace,
+      LogLevel::Debug => log::Level::Debug,
+      LogLevel::Info => log::Level::Info,
+      LogLevel::Warn => log::Level::Warn,
+      LogLevel::Error => log::Level::Error,
+    }
+  }
+}
+
+impl From<log::Level> for LogLevel {
+  fn from(log_level: log::Level) -> Self {
+    match log_level {
+      log::Level::Trace => LogLevel::Trace,
+      log::Level::Debug => LogLevel::Debug,
+      log::Level::Info => LogLevel::Info,
+      log::Level::Warn => LogLevel::Warn,
+      log::Level::Error => LogLevel::Error,
+    }
+  }
+}
+
+pub enum RotationStrategy {
+  KeepAll,
+  KeepOne,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -35,9 +87,28 @@ struct RecordPayload<'a> {
   level: LogLevel,
 }
 
-pub enum RotationStrategy {
-  KeepOne,
-  KeepAll,
+/// An enum representing the available targets of the logger.
+pub enum LogTarget {
+  /// Print logs to stdout.
+  Stdout,
+  /// Print logs to stderr.
+  Stderr,
+  /// Write logs to the given directory.
+  ///
+  /// The plugin will ensure the directory exists before writing logs.
+  Folder(PathBuf),
+  /// Write logs to the OS specififc logs directory.
+  ///   
+  /// ### Platform-specific
+  ///
+  /// - **Linux:** Resolves to `${configDir}/${bundleIdentifier}`.
+  /// - **macOS:** Resolves to `${homeDir}//Library/Logs/{bundleIdentifier}`
+  /// - **Windows:** Resolves to `${configDir}/${bundleIdentifier}`.
+  LogDir,
+  /// Forward logs to the webview (via the `log://log` event).
+  ///
+  /// This requires the webview to subscribe to log events, via this plugins `attachConsole` function.
+  Webview,
 }
 
 #[tauri::command]
@@ -51,49 +122,49 @@ fn log(level: LogLevel, message: String) {
   }
 }
 
-/// Targets of the logs.
-pub enum LogTarget {
-  /// Log to stdout.
-  Stdout,
-  /// Log to stderr.
-  Stderr,
-  /// Log to the specified folder.
-  Folder(PathBuf),
-  /// Log to the OS appropriate log folder.
-  LogDir,
-  /// Emit an event to the webview (`log://log`).
-  Webview,
+pub struct LoggerBuilder {
+  level_filter: LevelFilter,
+  rotation_strategy: RotationStrategy,
+  max_file_size: u128,
+  formatter: Box<fern::Formatter>,
+  targets: Vec<LogTarget>,
 }
 
-/// The logger.
-pub struct LoggerBuilder {
-  level: LevelFilter,
-  rotation_strategy: RotationStrategy,
-  targets: Vec<LogTarget>,
-  max_file_size: u128,
+impl Default for LoggerBuilder {
+  fn default() -> Self {
+    Self {
+      level_filter: DEFAULT_LOG_LEVEL,
+      rotation_strategy: DEFAULT_ROTATION_STRATEGY,
+      max_file_size: DEFAULT_MAX_FILE_SIZE,
+      targets: vec![LogTarget::Stdout, LogTarget::LogDir, LogTarget::Webview],
+      formatter: Box::new(|out, message, record| {
+        out.finish(format_args!(
+          "{}[{}][{}] {}",
+          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+          record.target(),
+          record.level(),
+          message
+        ))
+      }),
+    }
+  }
 }
 
 impl LoggerBuilder {
-  pub fn new<T: IntoIterator<Item = LogTarget>>(targets: T) -> Self {
-    let mut t = Vec::new();
-    for target in targets {
-      t.push(target);
-    }
+  pub fn new(targets: impl IntoIterator<Item = LogTarget>) -> Self {
     Self {
-      level: LevelFilter::Trace,
-      targets: t,
-      rotation_strategy: RotationStrategy::KeepOne,
-      max_file_size: DEFAULT_MAX_FILE_SIZE,
+      targets: Vec::from_iter(targets),
+      ..Default::default()
     }
   }
 
-  pub fn level(mut self, level: LevelFilter) -> Self {
-    self.level = level;
+  pub fn level(mut self, log_level: log::Level) -> Self {
+    self.level_filter = log_level.to_level_filter();
     self
   }
 
-  pub fn max_file_size(mut self, max_file_size: u128) -> Self {
-    self.max_file_size = max_file_size;
+  pub fn filter(mut self, level_filter: LevelFilter) -> Self {
+    self.level_filter = level_filter;
     self
   }
 
@@ -102,23 +173,66 @@ impl LoggerBuilder {
     self
   }
 
+  pub fn max_file_size(mut self, max_file_size: u128) -> Self {
+    self.max_file_size = max_file_size;
+    self
+  }
+
+  pub fn format<F>(mut self, formatter: F) -> Self
+  where
+    F: Fn(FormatCallback, &Arguments, &Record) + Sync + Send + 'static,
+  {
+    self.formatter = Box::new(formatter);
+    self
+  }
+
+  pub fn target(mut self, target: LogTarget) -> Self {
+    self.targets.push(target);
+    self
+  }
+
+  pub fn targets(mut self, targets: impl IntoIterator<Item = LogTarget>) -> Self {
+    self.targets = Vec::from_iter(targets);
+    self
+  }
+
   pub fn build<R: Runtime>(self) -> Logger<R> {
     Logger {
-      level: self.level,
+      level_filter: self.level_filter,
       rotation_strategy: self.rotation_strategy,
+      max_file_size: self.max_file_size,
+      formatter: Some(self.formatter),
       targets: self.targets,
       invoke_handler: Box::new(tauri::generate_handler![log]),
-      max_file_size: self.max_file_size,
+    }
+  }
+}
+
+#[cfg(feature = "colored")]
+impl LoggerBuilder {
+  pub fn with_colors(colors: fern::colors::ColoredLevelConfig) -> Self {
+    Self {
+      formatter: Box::new(move |out, message, record| {
+        out.finish(format_args!(
+          "{}[{}][{}] {}",
+          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+          record.target(),
+          colors.color(record.level()),
+          message
+        ))
+      }),
+      ..Default::default()
     }
   }
 }
 
 pub struct Logger<R: Runtime> {
-  level: LevelFilter,
+  level_filter: LevelFilter,
   rotation_strategy: RotationStrategy,
+  max_file_size: u128,
+  formatter: Option<Box<fern::Formatter>>,
   targets: Vec<LogTarget>,
   invoke_handler: Box<dyn Fn(Invoke<R>) + Send + Sync>,
-  max_file_size: u128,
 }
 
 impl<R: Runtime> Plugin<R> for Logger<R> {
@@ -126,50 +240,49 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
     "log"
   }
 
-  fn initialize(&mut self, app: &AppHandle<R>, _config: JsonValue) -> PluginResult<()> {
+  fn initialize(
+    &mut self,
+    app_handle: &AppHandle<R>,
+    _config: serde_json::Value,
+  ) -> PluginResult<()> {
     let mut dispatch = fern::Dispatch::new()
-      // Perform allocation-free log formatting
-      .format(|out, message, record| {
-        out.finish(format_args!(
-          "{}[{}][{}] {}",
-          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-          record.target(),
-          record.level(),
-          message
-        ))
-      })
-      .level(self.level);
+      // setup formatter
+      .format(self.formatter.take().unwrap())
+      // setup level filter
+      .level(self.level_filter);
+
+    // setup targets
     for target in &self.targets {
       dispatch = dispatch.chain(match target {
         LogTarget::Stdout => fern::Output::from(std::io::stdout()),
-        LogTarget::Stderr => std::io::stderr().into(),
+        LogTarget::Stderr => fern::Output::from(std::io::stderr()),
         LogTarget::Folder(path) => {
           if !path.exists() {
             fs::create_dir_all(&path).unwrap();
           }
+
           fern::log_file(get_log_file_path(
             &path,
-            &app.package_info().name,
             &self.rotation_strategy,
             self.max_file_size,
           )?)?
           .into()
         }
         LogTarget::LogDir => {
-          let path = app.path_resolver().log_dir().unwrap();
+          let path = app_handle.path_resolver().log_dir().unwrap();
           if !path.exists() {
             fs::create_dir_all(&path).unwrap();
           }
+
           fern::log_file(get_log_file_path(
             &path,
-            &app.package_info().name,
             &self.rotation_strategy,
             self.max_file_size,
           )?)?
           .into()
         }
         LogTarget::Webview => {
-          let app_handle = Mutex::new(app.clone());
+          let app_handle = Mutex::new(app_handle.clone());
 
           fern::Output::call(move |record| {
             app_handle
@@ -179,13 +292,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
                 "log://log",
                 RecordPayload {
                   message: *record.args(),
-                  level: match record.level() {
-                    log::Level::Trace => LogLevel::Trace,
-                    log::Level::Debug => LogLevel::Debug,
-                    log::Level::Info => LogLevel::Info,
-                    log::Level::Warn => LogLevel::Warn,
-                    log::Level::Error => LogLevel::Error,
-                  },
+                  level: record.level().into(),
                 },
               )
               .unwrap();
@@ -193,7 +300,9 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
         }
       });
     }
+
     dispatch.apply()?;
+
     Ok(())
   }
 
