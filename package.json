@@ -8,10 +8,10 @@
   "browser": "webview-dist/index.min.js",
   "module": "webview-dist/index.mjs",
   "types": "webview-dist/index.d.ts",
+  "type": "module",
   "exports": {
     ".": {
-      "import": "./webview-dist/index.mjs",
-      "require": "./webview-dist/index.min.js"
+      "import": "./webview-dist/index.mjs"
     },
     "./package.json": "./package.json"
   },
