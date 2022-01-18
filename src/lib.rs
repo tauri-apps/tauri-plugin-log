@@ -204,11 +204,13 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
 
 fn get_log_file_path(
   dir: &impl AsRef<Path>,
-  app_name: &str,
   rotation_strategy: &RotationStrategy,
   max_file_size: u128,
 ) -> PluginResult<PathBuf> {
+  let app_name = env!("CARGO_PKG_NAME");
+
   let path = dir.as_ref().join(format!("{}.log", app_name));
+
   if path.exists() {
     let log_size = File::open(&path)?.metadata()?.len() as u128;
     if log_size > max_file_size {
@@ -217,9 +219,8 @@ fn get_log_file_path(
           fs::rename(
             &path,
             dir.as_ref().join(format!(
-              "{}-{}.log",
-              app_name,
-              chrono::Local::now().format("%Y-%m-%d")
+              "{}.log",
+              chrono::Local::now().format("app-%Y-%m-%d")
             )),
           )?;
         }
