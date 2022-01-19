@@ -1,24 +1,23 @@
 {
   "name": "tauri-plugin-log-api",
   "version": "0.1.0",
+  "private": "true",
   "authors": [
     "Tauri Programme within The Commons Conservancy"
   ],
   "description": "Tauri Plugin for logging",
-  "browser": "webview-dist/index.min.js",
-  "module": "webview-dist/index.mjs",
-  "types": "webview-dist/index.d.ts",
-  "private": "true",
-  "files": [
-    "webview-dist"
-  ],
   "type": "module",
+  "browser": "webview-dist/index.min.js",
+  "types": "webview-dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./webview-dist/index.mjs"
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "webview-dist"
+  ],
   "scripts": {
     "build": "rollup -c ./webview-src/rollup.config.js",
     "prepublishOnly": "yarn build",
@@ -26,14 +25,17 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "13.0.6",
+    "@rollup/plugin-node-resolve": "13.1.3",
     "@rollup/plugin-typescript": "8.3.0",
-    "rollup": "2.60.0",
-    "rollup-plugin-terser": "^7.0.2",
+    "rollup": "2.64.0",
+    "rollup-plugin-terser": "7.0.2",
     "typescript": "4.5.4"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-beta.8",
     "tslib": "^2.3.1"
+  },
+  "peerDependencies": {
+    "type-fest": "^2.9.0"
   }
 }
