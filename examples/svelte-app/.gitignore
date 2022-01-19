@@ -1,5 +1,4 @@
-node_modules/
-public/build/
-public/index.tauri.html
+/node_modules/
+/public/build/
 
-example.stronghold
+.DS_Store
