@@ -107,7 +107,7 @@ async function info(message) {
  *
  * const pos = { x: 3.234, y: -1.223 };
  *
- * debug!(`New position: x: {pos.x}, y: {pos.y}`);
+ * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
 async function debug(message) {

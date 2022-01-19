@@ -59,7 +59,7 @@ export declare function info(message: string): Promise<void>;
  *
  * const pos = { x: 3.234, y: -1.223 };
  *
- * debug!(`New position: x: {pos.x}, y: {pos.y}`);
+ * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
 export declare function debug(message: string): Promise<void>;
