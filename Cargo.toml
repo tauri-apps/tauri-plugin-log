@@ -2,7 +2,7 @@
 name = "tauri-plugin-log"
 version = "0.1.0"
 authors = [ "Tauri Programme within The Commons Conservancy" ]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 tauri = { git = "https://github.com/tauri-apps/tauri", branch = "next" }
@@ -13,3 +13,6 @@ byte-unit = "4.0"
 fern = "0.6"
 log = "0.4"
 chrono = "0.4"
+
+[features]
+colored = ["fern/colored"]

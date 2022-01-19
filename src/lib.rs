@@ -1,233 +1,344 @@
-use byte_unit::Byte;
-use log::{debug, error, info, trace, warn};
-use serde::{Deserialize, Serialize};
-use serde_json::Value as JsonValue;
+// Copyright 2021 Tauri Programme within The Commons Conservancy
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
+
+use fern::FormatCallback;
+use log::{debug, error, info, trace, warn, LevelFilter, Record};
+use serde::Serialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::sync::Mutex;
-use tauri::AppHandle;
+use std::{
+  fmt::Arguments,
+  fs::{self, File},
+  iter::FromIterator,
+  path::{Path, PathBuf},
+};
 use tauri::{
-    plugin::{Plugin, Result as PluginResult},
-    Invoke, Manager, Runtime,
+  plugin::{Plugin, Result as PluginResult},
+  AppHandle, Invoke, Manager, Runtime,
 };
 
-use std::fs::{self, File};
-use std::path::{Path, PathBuf};
+pub use fern;
 
-pub use log::LevelFilter;
+const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
+const DEFAULT_ROTATION_STRATEGY: RotationStrategy = RotationStrategy::KeepOne;
+const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Info;
 
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct LogConfiguration {
-    max_file_size: Option<String>,
-}
-
-/// The available verbosity levels of the logger.
-#[derive(Deserialize_repr, Serialize_repr, Debug, Clone)]
+/// An enum representing the available verbosity levels of the logger.
+///
+/// It is very similar to the [`log::Level`], but serializes to unsigned ints instead of strings.
+#[derive(Debug, Clone, Deserialize_repr, Serialize_repr)]
 #[repr(u16)]
 pub enum LogLevel {
-    Trace = 1,
-    Debug,
-    Info,
-    Warn,
-    Error,
+  /// The "trace" level.
+  ///
+  /// Designates very low priority, often extremely verbose, information.
+  Trace = 1,
+  /// The "debug" level.
+  ///
+  /// Designates lower priority information.
+  Debug,
+  /// The "info" level.
+  ///
+  /// Designates useful information.
+  Info,
+  /// The "warn" level.
+  ///
+  /// Designates hazardous situations.
+  Warn,
+  /// The "error" level.
+  ///
+  /// Designates very serious errors.
+  Error,
+}
+
+impl From<LogLevel> for log::Level {
+  fn from(log_level: LogLevel) -> Self {
+    match log_level {
+      LogLevel::Trace => log::Level::Trace,
+      LogLevel::Debug => log::Level::Debug,
+      LogLevel::Info => log::Level::Info,
+      LogLevel::Warn => log::Level::Warn,
+      LogLevel::Error => log::Level::Error,
+    }
+  }
+}
+
+impl From<log::Level> for LogLevel {
+  fn from(log_level: log::Level) -> Self {
+    match log_level {
+      log::Level::Trace => LogLevel::Trace,
+      log::Level::Debug => LogLevel::Debug,
+      log::Level::Info => LogLevel::Info,
+      log::Level::Warn => LogLevel::Warn,
+      log::Level::Error => LogLevel::Error,
+    }
+  }
+}
+
+pub enum RotationStrategy {
+  KeepAll,
+  KeepOne,
 }
 
 #[derive(Debug, Serialize, Clone)]
 struct RecordPayload<'a> {
-    message: std::fmt::Arguments<'a>,
-    level: LogLevel,
+  message: std::fmt::Arguments<'a>,
+  level: LogLevel,
 }
 
-pub enum RotationStrategy {
-    KeepOne,
-    KeepAll,
-}
-
-const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
-
-fn get_max_file_size(config: &LogConfiguration) -> u128 {
-    if let Some(max_file_size) = &config.max_file_size {
-        Byte::from_str(max_file_size)
-            .expect("failed to parse maxFileSize")
-            .get_bytes()
-    } else {
-        DEFAULT_MAX_FILE_SIZE
-    }
-}
-
-fn get_log_file_path<P: AsRef<Path>>(
-    config: &LogConfiguration,
-    dir: P,
-    rotation_strategy: &RotationStrategy,
-) -> PluginResult<PathBuf> {
-    let path = dir.as_ref().join("app.log");
-    if path.exists() {
-        let log_size = File::open(&path)?.metadata()?.len() as u128;
-        if log_size > get_max_file_size(config) {
-            match rotation_strategy {
-                RotationStrategy::KeepAll => {
-                    fs::rename(
-                        &path,
-                        dir.as_ref().join(format!(
-                            "{}.log",
-                            chrono::Local::now().format("app-%Y-%m-%d")
-                        )),
-                    )?;
-                }
-                RotationStrategy::KeepOne => {
-                    fs::remove_file(&path)?;
-                }
-            }
-        }
-    }
-
-    Ok(path)
+/// An enum representing the available targets of the logger.
+pub enum LogTarget {
+  /// Print logs to stdout.
+  Stdout,
+  /// Print logs to stderr.
+  Stderr,
+  /// Write logs to the given directory.
+  ///
+  /// The plugin will ensure the directory exists before writing logs.
+  Folder(PathBuf),
+  /// Write logs to the OS specififc logs directory.
+  ///   
+  /// ### Platform-specific
+  ///
+  /// - **Linux:** Resolves to `${configDir}/${bundleIdentifier}`.
+  /// - **macOS:** Resolves to `${homeDir}//Library/Logs/{bundleIdentifier}`
+  /// - **Windows:** Resolves to `${configDir}/${bundleIdentifier}`.
+  LogDir,
+  /// Forward logs to the webview (via the `log://log` event).
+  ///
+  /// This requires the webview to subscribe to log events, via this plugins `attachConsole` function.
+  Webview,
 }
 
 #[tauri::command]
 fn log(level: LogLevel, message: String) {
-    match level {
-        LogLevel::Trace => trace!("{}", message),
-        LogLevel::Debug => debug!("{}", message),
-        LogLevel::Info => info!("{}", message),
-        LogLevel::Warn => warn!("{}", message),
-        LogLevel::Error => error!("{}", message),
-    }
+  match level {
+    LogLevel::Trace => trace!("{}", message),
+    LogLevel::Debug => debug!("{}", message),
+    LogLevel::Info => info!("{}", message),
+    LogLevel::Warn => warn!("{}", message),
+    LogLevel::Error => error!("{}", message),
+  }
 }
 
-/// Targets of the logs.
-pub enum LogTarget {
-    /// Log to stdout.
-    Stdout,
-    /// Log to stderr.
-    Stderr,
-    /// Log to the specified folder.
-    Folder(PathBuf),
-    /// Log to the OS appropriate log folder.
-    LogDir,
-    /// Emit an event to the webview (`log://log`).
-    Webview,
-}
-
-/// The logger.
 pub struct LoggerBuilder {
-    level: LevelFilter,
-    rotation_strategy: RotationStrategy,
-    targets: Vec<LogTarget>,
+  level_filter: LevelFilter,
+  rotation_strategy: RotationStrategy,
+  max_file_size: u128,
+  formatter: Box<fern::Formatter>,
+  targets: Vec<LogTarget>,
+}
+
+impl Default for LoggerBuilder {
+  fn default() -> Self {
+    Self {
+      level_filter: DEFAULT_LOG_LEVEL,
+      rotation_strategy: DEFAULT_ROTATION_STRATEGY,
+      max_file_size: DEFAULT_MAX_FILE_SIZE,
+      targets: vec![LogTarget::Stdout, LogTarget::LogDir, LogTarget::Webview],
+      formatter: Box::new(|out, message, record| {
+        out.finish(format_args!(
+          "{}[{}][{}] {}",
+          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+          record.target(),
+          record.level(),
+          message
+        ))
+      }),
+    }
+  }
 }
 
 impl LoggerBuilder {
-    pub fn new<T: IntoIterator<Item = LogTarget>>(targets: T) -> Self {
-        let mut t = Vec::new();
-        for target in targets {
-            t.push(target);
-        }
-        Self {
-            level: LevelFilter::Trace,
-            targets: t,
-            rotation_strategy: RotationStrategy::KeepOne,
-        }
+  pub fn new(targets: impl IntoIterator<Item = LogTarget>) -> Self {
+    Self {
+      targets: Vec::from_iter(targets),
+      ..Default::default()
     }
+  }
 
-    pub fn level(mut self, level: LevelFilter) -> Self {
-        self.level = level;
-        self
-    }
+  pub fn level(mut self, log_level: log::Level) -> Self {
+    self.level_filter = log_level.to_level_filter();
+    self
+  }
 
-    pub fn rotation_strategy(mut self, rotation_strategy: RotationStrategy) -> Self {
-        self.rotation_strategy = rotation_strategy;
-        self
-    }
+  pub fn filter(mut self, level_filter: LevelFilter) -> Self {
+    self.level_filter = level_filter;
+    self
+  }
 
-    pub fn build<R: Runtime>(self) -> Logger<R> {
-        Logger {
-            level: self.level,
-            rotation_strategy: self.rotation_strategy,
-            targets: self.targets,
-            invoke_handler: Box::new(tauri::generate_handler![log]),
-        }
+  pub fn rotation_strategy(mut self, rotation_strategy: RotationStrategy) -> Self {
+    self.rotation_strategy = rotation_strategy;
+    self
+  }
+
+  pub fn max_file_size(mut self, max_file_size: u128) -> Self {
+    self.max_file_size = max_file_size;
+    self
+  }
+
+  pub fn format<F>(mut self, formatter: F) -> Self
+  where
+    F: Fn(FormatCallback, &Arguments, &Record) + Sync + Send + 'static,
+  {
+    self.formatter = Box::new(formatter);
+    self
+  }
+
+  pub fn target(mut self, target: LogTarget) -> Self {
+    self.targets.push(target);
+    self
+  }
+
+  pub fn targets(mut self, targets: impl IntoIterator<Item = LogTarget>) -> Self {
+    self.targets = Vec::from_iter(targets);
+    self
+  }
+
+  pub fn build<R: Runtime>(self) -> Logger<R> {
+    Logger {
+      level_filter: self.level_filter,
+      rotation_strategy: self.rotation_strategy,
+      max_file_size: self.max_file_size,
+      formatter: Some(self.formatter),
+      targets: self.targets,
+      invoke_handler: Box::new(tauri::generate_handler![log]),
     }
+  }
+}
+
+#[cfg(feature = "colored")]
+impl LoggerBuilder {
+  pub fn with_colors(colors: fern::colors::ColoredLevelConfig) -> Self {
+    Self {
+      formatter: Box::new(move |out, message, record| {
+        out.finish(format_args!(
+          "{}[{}][{}] {}",
+          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+          record.target(),
+          colors.color(record.level()),
+          message
+        ))
+      }),
+      ..Default::default()
+    }
+  }
 }
 
 pub struct Logger<R: Runtime> {
-    level: LevelFilter,
-    rotation_strategy: RotationStrategy,
-    targets: Vec<LogTarget>,
-    invoke_handler: Box<dyn Fn(Invoke<R>) + Send + Sync>,
+  level_filter: LevelFilter,
+  rotation_strategy: RotationStrategy,
+  max_file_size: u128,
+  formatter: Option<Box<fern::Formatter>>,
+  targets: Vec<LogTarget>,
+  invoke_handler: Box<dyn Fn(Invoke<R>) + Send + Sync>,
 }
 
 impl<R: Runtime> Plugin<R> for Logger<R> {
-    fn name(&self) -> &'static str {
-        "log"
-    }
+  fn name(&self) -> &'static str {
+    "log"
+  }
 
-    fn initialize(&mut self, app: &AppHandle<R>, config: JsonValue) -> PluginResult<()> {
-        let config: LogConfiguration = if config.is_null() {
-            Default::default()
-        } else {
-            serde_json::from_value(config)?
-        };
-        let mut dispatch = fern::Dispatch::new()
-            // Perform allocation-free log formatting
-            .format(|out, message, record| {
-                out.finish(format_args!(
-                    "{}[{}][{}] {}",
-                    chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-                    record.target(),
-                    record.level(),
-                    message
-                ))
-            })
-            .level(self.level);
-        for target in &self.targets {
-            dispatch = dispatch.chain(match target {
-                LogTarget::Stdout => fern::Output::from(std::io::stdout()),
-                LogTarget::Stderr => std::io::stderr().into(),
-                LogTarget::Folder(path) => {
-                    if !path.exists() {
-                        fs::create_dir_all(&path).unwrap();
-                    }
-                    fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
-                        .into()
-                }
-                LogTarget::LogDir => {
-                    let path = app.path_resolver().log_dir().unwrap();
-                    if !path.exists() {
-                        fs::create_dir_all(&path).unwrap();
-                    }
-                    fern::log_file(get_log_file_path(&config, &path, &self.rotation_strategy)?)?
-                        .into()
-                }
-                LogTarget::Webview => {
-                    let app_handle = Mutex::new(app.clone());
+  fn initialize(
+    &mut self,
+    app_handle: &AppHandle<R>,
+    _config: serde_json::Value,
+  ) -> PluginResult<()> {
+    let mut dispatch = fern::Dispatch::new()
+      // setup formatter
+      .format(self.formatter.take().unwrap())
+      // setup level filter
+      .level(self.level_filter);
 
-                    fern::Output::call(move |record| {
-                        app_handle
-                            .lock()
-                            .unwrap()
-                            .emit_all(
-                                "log://log",
-                                RecordPayload {
-                                    message: *record.args(),
-                                    level: match record.level() {
-                                        log::Level::Trace => LogLevel::Trace,
-                                        log::Level::Debug => LogLevel::Debug,
-                                        log::Level::Info => LogLevel::Info,
-                                        log::Level::Warn => LogLevel::Warn,
-                                        log::Level::Error => LogLevel::Error,
-                                    },
-                                },
-                            )
-                            .unwrap();
-                    })
-                }
-            });
+    // setup targets
+    for target in &self.targets {
+      dispatch = dispatch.chain(match target {
+        LogTarget::Stdout => fern::Output::from(std::io::stdout()),
+        LogTarget::Stderr => fern::Output::from(std::io::stderr()),
+        LogTarget::Folder(path) => {
+          if !path.exists() {
+            fs::create_dir_all(&path).unwrap();
+          }
+
+          fern::log_file(get_log_file_path(
+            &path,
+            &self.rotation_strategy,
+            self.max_file_size,
+          )?)?
+          .into()
         }
-        dispatch.apply()?;
-        Ok(())
+        LogTarget::LogDir => {
+          let path = app_handle.path_resolver().log_dir().unwrap();
+          if !path.exists() {
+            fs::create_dir_all(&path).unwrap();
+          }
+
+          fern::log_file(get_log_file_path(
+            &path,
+            &self.rotation_strategy,
+            self.max_file_size,
+          )?)?
+          .into()
+        }
+        LogTarget::Webview => {
+          let app_handle = Mutex::new(app_handle.clone());
+
+          fern::Output::call(move |record| {
+            app_handle
+              .lock()
+              .unwrap()
+              .emit_all(
+                "log://log",
+                RecordPayload {
+                  message: *record.args(),
+                  level: record.level().into(),
+                },
+              )
+              .unwrap();
+          })
+        }
+      });
     }
 
-    fn extend_api(&mut self, message: Invoke<R>) {
-        (self.invoke_handler)(message)
+    dispatch.apply()?;
+
+    Ok(())
+  }
+
+  fn extend_api(&mut self, message: Invoke<R>) {
+    (self.invoke_handler)(message)
+  }
+}
+
+fn get_log_file_path(
+  dir: &impl AsRef<Path>,
+  rotation_strategy: &RotationStrategy,
+  max_file_size: u128,
+) -> PluginResult<PathBuf> {
+  let app_name = env!("CARGO_PKG_NAME");
+
+  let path = dir.as_ref().join(format!("{}.log", app_name));
+
+  if path.exists() {
+    let log_size = File::open(&path)?.metadata()?.len() as u128;
+    if log_size > max_file_size {
+      match rotation_strategy {
+        RotationStrategy::KeepAll => {
+          fs::rename(
+            &path,
+            dir.as_ref().join(format!(
+              "{}.log",
+              chrono::Local::now().format("app-%Y-%m-%d")
+            )),
+          )?;
+        }
+        RotationStrategy::KeepOne => {
+          fs::remove_file(&path)?;
+        }
+      }
     }
+  }
+
+  Ok(path)
 }
