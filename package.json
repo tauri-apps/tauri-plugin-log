@@ -1,14 +1,20 @@
 {
   "name": "tauri-plugin-log-api",
   "version": "0.1.0",
+  "private": "true",
   "authors": [
     "Tauri Programme within The Commons Conservancy"
   ],
   "description": "Tauri Plugin for logging",
+  "type": "module",
   "browser": "webview-dist/index.min.js",
-  "module": "webview-dist/index.mjs",
   "types": "webview-dist/index.d.ts",
-  "private": "true",
+  "exports": {
+    ".": {
+      "import": "./webview-dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "webview-dist"
   ],
