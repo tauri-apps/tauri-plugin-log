@@ -214,19 +214,16 @@ impl LoggerBuilder {
 
 #[cfg(feature = "colored")]
 impl LoggerBuilder {
-  pub fn with_colors(colors: fern::colors::ColoredLevelConfig) -> Self {
-    Self {
-      formatter: Box::new(move |out, message, record| {
-        out.finish(format_args!(
-          "{}[{}][{}] {}",
-          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-          record.target(),
-          colors.color(record.level()),
-          message
-        ))
-      }),
-      ..Default::default()
-    }
+  pub fn with_colors(self, colors: fern::colors::ColoredLevelConfig) -> Self {
+    self.format(move |out, message, record| {
+      out.finish(format_args!(
+        "{}[{}][{}] {}",
+        chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+        record.target(),
+        colors.color(record.level()),
+        message
+      ))
+    })
   }
 }
 
