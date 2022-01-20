@@ -151,21 +151,8 @@ impl Default for LoggerBuilder {
 }
 
 impl LoggerBuilder {
-  pub fn new(targets: impl IntoIterator<Item = LogTarget>) -> Self {
-    Self {
-      targets: Vec::from_iter(targets),
-      ..Default::default()
-    }
-  }
-
-  pub fn level(mut self, log_level: log::Level) -> Self {
-    self.level_filter = log_level.to_level_filter();
-    self
-  }
-
-  pub fn filter(mut self, level_filter: LevelFilter) -> Self {
-    self.level_filter = level_filter;
-    self
+  pub fn new() -> Self {
+    Default::default()
   }
 
   pub fn rotation_strategy(mut self, rotation_strategy: RotationStrategy) -> Self {
