@@ -6,6 +6,7 @@ use fern::FormatCallback;
 use log::{debug, error, info, trace, warn, LevelFilter, Record};
 use serde::Serialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::borrow::Cow;
 use std::sync::Mutex;
 use std::{
   fmt::Arguments,
@@ -22,7 +23,7 @@ pub use fern;
 
 const DEFAULT_MAX_FILE_SIZE: u128 = 40000;
 const DEFAULT_ROTATION_STRATEGY: RotationStrategy = RotationStrategy::KeepOne;
-const DEFAULT_LOG_LEVEL: LevelFilter = LevelFilter::Info;
+const DEFAULT_LOG_TARGETS: [LogTarget; 2] = [LogTarget::Stdout, LogTarget::LogDir];
 
 /// An enum representing the available verbosity levels of the logger.
 ///
@@ -123,49 +124,35 @@ fn log(level: LogLevel, message: String) {
 }
 
 pub struct LoggerBuilder {
-  level_filter: LevelFilter,
+  dispatch: fern::Dispatch,
   rotation_strategy: RotationStrategy,
   max_file_size: u128,
-  formatter: Box<fern::Formatter>,
   targets: Vec<LogTarget>,
 }
 
 impl Default for LoggerBuilder {
   fn default() -> Self {
+    let dispatch = fern::Dispatch::new().format(move |out, message, record| {
+      out.finish(format_args!(
+        "{}[{}][{}] {}",
+        chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+        record.target(),
+        record.level(),
+        message
+      ))
+    });
     Self {
-      level_filter: DEFAULT_LOG_LEVEL,
+      dispatch,
       rotation_strategy: DEFAULT_ROTATION_STRATEGY,
       max_file_size: DEFAULT_MAX_FILE_SIZE,
-      targets: vec![LogTarget::Stdout, LogTarget::LogDir, LogTarget::Webview],
-      formatter: Box::new(|out, message, record| {
-        out.finish(format_args!(
-          "{}[{}][{}] {}",
-          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-          record.target(),
-          record.level(),
-          message
-        ))
-      }),
+      targets: DEFAULT_LOG_TARGETS.into(),
     }
   }
 }
 
 impl LoggerBuilder {
-  pub fn new(targets: impl IntoIterator<Item = LogTarget>) -> Self {
-    Self {
-      targets: Vec::from_iter(targets),
-      ..Default::default()
-    }
-  }
-
-  pub fn level(mut self, log_level: log::Level) -> Self {
-    self.level_filter = log_level.to_level_filter();
-    self
-  }
-
-  pub fn filter(mut self, level_filter: LevelFilter) -> Self {
-    self.level_filter = level_filter;
-    self
+  pub fn new() -> Self {
+    Default::default()
   }
 
   pub fn rotation_strategy(mut self, rotation_strategy: RotationStrategy) -> Self {
@@ -182,7 +169,25 @@ impl LoggerBuilder {
   where
     F: Fn(FormatCallback, &Arguments, &Record) + Sync + Send + 'static,
   {
-    self.formatter = Box::new(formatter);
+    self.dispatch = self.dispatch.format(formatter);
+    self
+  }
+
+  pub fn level(mut self, level_filter: impl Into<LevelFilter>) -> Self {
+    self.dispatch = self.dispatch.level(level_filter.into());
+    self
+  }
+
+  pub fn level_for(mut self, module: impl Into<Cow<'static, str>>, level: LevelFilter) -> Self {
+    self.dispatch = self.dispatch.level_for(module, level);
+    self
+  }
+
+  pub fn filter<F>(mut self, filter: F) -> Self
+  where
+    F: Fn(&log::Metadata) -> bool + Send + Sync + 'static,
+  {
+    self.dispatch = self.dispatch.filter(filter);
     self
   }
 
@@ -198,10 +203,9 @@ impl LoggerBuilder {
 
   pub fn build<R: Runtime>(self) -> Logger<R> {
     Logger {
-      level_filter: self.level_filter,
+      dispatch: Some(self.dispatch),
       rotation_strategy: self.rotation_strategy,
       max_file_size: self.max_file_size,
-      formatter: Some(self.formatter),
       targets: self.targets,
       invoke_handler: Box::new(tauri::generate_handler![log]),
     }
@@ -210,27 +214,23 @@ impl LoggerBuilder {
 
 #[cfg(feature = "colored")]
 impl LoggerBuilder {
-  pub fn with_colors(colors: fern::colors::ColoredLevelConfig) -> Self {
-    Self {
-      formatter: Box::new(move |out, message, record| {
-        out.finish(format_args!(
-          "{}[{}][{}] {}",
-          chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
-          record.target(),
-          colors.color(record.level()),
-          message
-        ))
-      }),
-      ..Default::default()
-    }
+  pub fn with_colors(self, colors: fern::colors::ColoredLevelConfig) -> Self {
+    self.format(move |out, message, record| {
+      out.finish(format_args!(
+        "{}[{}][{}] {}",
+        chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+        record.target(),
+        colors.color(record.level()),
+        message
+      ))
+    })
   }
 }
 
 pub struct Logger<R: Runtime> {
-  level_filter: LevelFilter,
+  dispatch: Option<fern::Dispatch>,
   rotation_strategy: RotationStrategy,
   max_file_size: u128,
-  formatter: Option<Box<fern::Formatter>>,
   targets: Vec<LogTarget>,
   invoke_handler: Box<dyn Fn(Invoke<R>) + Send + Sync>,
 }
@@ -245,11 +245,10 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
     app_handle: &AppHandle<R>,
     _config: serde_json::Value,
   ) -> PluginResult<()> {
-    let mut dispatch = fern::Dispatch::new()
-      // setup formatter
-      .format(self.formatter.take().unwrap())
-      // setup level filter
-      .level(self.level_filter);
+    let mut dispatch = self
+      .dispatch
+      .take()
+      .expect("failed to take dispatch from Option");
 
     // setup targets
     for target in &self.targets {
