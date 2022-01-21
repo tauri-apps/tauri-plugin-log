@@ -1,5 +1,5 @@
 [package]
-name = "app"
+name = "cra-app"
 version = "0.1.0"
 description = "A Tauri App"
 authors = [ "Tauri Programme within The Commons Conservancy" ]
