@@ -102,9 +102,11 @@ pub enum LogTarget {
   ///   
   /// ### Platform-specific
   ///
-  /// - **Linux:** Resolves to `${configDir}/${bundleIdentifier}`.
-  /// - **macOS:** Resolves to `${homeDir}//Library/Logs/{bundleIdentifier}`
-  /// - **Windows:** Resolves to `${configDir}/${bundleIdentifier}`.
+  /// |Platform | Value                                         | Example                                        |
+  /// | ------- | --------------------------------------------- | ---------------------------------------------- |
+  /// | Linux   | `{configDir}/{bundleIdentifier}`              | `/home/alice/.config/com.tauri.dev`            |
+  /// | macOS   | `{homeDir}/Library/Logs/{bundleIdentifier}`   | `/Users/Alice/Library/Logs/com.tauri.dev`      |
+  /// | Windows | `{configDir}/{bundleIdentifier}`              | `C:\Users\Alice\AppData\Roaming\com.tauri.dev` |
   LogDir,
   /// Forward logs to the webview (via the `log://log` event).
   ///
