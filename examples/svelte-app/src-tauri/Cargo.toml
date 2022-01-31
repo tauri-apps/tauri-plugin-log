@@ -1,10 +1,10 @@
 [package]
-name = "app"
+name = "svelte-app"
 version = "0.1.0"
 description = "A Tauri App"
 authors = [ "Tauri Programme within The Commons Conservancy" ]
 repository = ""
-default-run = "app"
+default-run = "svelte-app"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

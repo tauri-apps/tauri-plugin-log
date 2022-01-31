@@ -247,6 +247,8 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
     app_handle: &AppHandle<R>,
     _config: serde_json::Value,
   ) -> PluginResult<()> {
+    let app_name = &app_handle.package_info().name;
+
     let mut dispatch = self
       .dispatch
       .take()
@@ -264,6 +266,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
 
           fern::log_file(get_log_file_path(
             &path,
+            app_name,
             &self.rotation_strategy,
             self.max_file_size,
           )?)?
@@ -277,6 +280,7 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
 
           fern::log_file(get_log_file_path(
             &path,
+            app_name,
             &self.rotation_strategy,
             self.max_file_size,
           )?)?
@@ -314,11 +318,10 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
 
 fn get_log_file_path(
   dir: &impl AsRef<Path>,
+  app_name: &str,
   rotation_strategy: &RotationStrategy,
   max_file_size: u128,
 ) -> PluginResult<PathBuf> {
-  let app_name = env!("CARGO_PKG_NAME");
-
   let path = dir.as_ref().join(format!("{}.log", app_name));
 
   if path.exists() {
