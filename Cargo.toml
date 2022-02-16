@@ -13,7 +13,8 @@ byte-unit = "4.0"
 fern = "0.6"
 log = "0.4"
 chrono = "0.4"
-tauri = "1.0.0-rc.2"
+# Use the temp branch where the `setup` callback doesn't have to implement `Sync`
+tauri = { git = "https://github.com/tauri-apps/tauri", branch = "JonasKruckenberg-patch-1" }
 
 [features]
 colored = ["fern/colored"]

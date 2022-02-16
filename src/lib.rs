@@ -7,7 +7,6 @@ use log::{debug, error, info, trace, warn, LevelFilter, Record};
 use serde::Serialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::borrow::Cow;
-use std::sync::Mutex;
 use std::{
   fmt::Arguments,
   fs::{self, File},
@@ -15,8 +14,8 @@ use std::{
   path::{Path, PathBuf},
 };
 use tauri::{
-  plugin::{Plugin, Result as PluginResult},
-  AppHandle, Invoke, Manager, Runtime,
+  plugin::{self, TauriPlugin},
+  Manager, Runtime,
 };
 
 pub use fern;
@@ -203,14 +202,72 @@ impl LoggerBuilder {
     self
   }
 
-  pub fn build<R: Runtime>(self) -> Logger<R> {
-    Logger {
-      dispatch: Some(self.dispatch),
-      rotation_strategy: self.rotation_strategy,
-      max_file_size: self.max_file_size,
-      targets: self.targets,
-      invoke_handler: Box::new(tauri::generate_handler![log]),
-    }
+  pub fn build<R: Runtime>(mut self) -> TauriPlugin<R>
+  where
+    <R as tauri::Runtime>::GlobalShortcutManager: Sync,
+    <R as tauri::Runtime>::ClipboardManager: Sync,
+    <R as tauri::Runtime>::Handle: Sync,
+  {
+    plugin::Builder::new("log")
+      .invoke_handler(tauri::generate_handler![log])
+      .setup(move |app_handle| {
+        let app_name = &app_handle.package_info().name;
+
+        // setup targets
+        for target in &self.targets {
+          self.dispatch = self.dispatch.chain(match target {
+            LogTarget::Stdout => fern::Output::from(std::io::stdout()),
+            LogTarget::Stderr => fern::Output::from(std::io::stderr()),
+            LogTarget::Folder(path) => {
+              if !path.exists() {
+                fs::create_dir_all(&path).unwrap();
+              }
+
+              fern::log_file(get_log_file_path(
+                &path,
+                app_name,
+                &self.rotation_strategy,
+                self.max_file_size,
+              )?)?
+              .into()
+            }
+            LogTarget::LogDir => {
+              let path = app_handle.path_resolver().log_dir().unwrap();
+              if !path.exists() {
+                fs::create_dir_all(&path).unwrap();
+              }
+
+              fern::log_file(get_log_file_path(
+                &path,
+                app_name,
+                &self.rotation_strategy,
+                self.max_file_size,
+              )?)?
+              .into()
+            }
+            LogTarget::Webview => {
+              let app_handle = app_handle.clone();
+
+              fern::Output::call(move |record| {
+                app_handle
+                  .emit_all(
+                    "log://log",
+                    RecordPayload {
+                      message: *record.args(),
+                      level: record.level().into(),
+                    },
+                  )
+                  .unwrap();
+              })
+            }
+          });
+        }
+
+        self.dispatch.apply()?;
+
+        Ok(())
+      })
+      .build()
   }
 }
 
@@ -229,99 +286,12 @@ impl LoggerBuilder {
   }
 }
 
-pub struct Logger<R: Runtime> {
-  dispatch: Option<fern::Dispatch>,
-  rotation_strategy: RotationStrategy,
-  max_file_size: u128,
-  targets: Vec<LogTarget>,
-  invoke_handler: Box<dyn Fn(Invoke<R>) + Send + Sync>,
-}
-
-impl<R: Runtime> Plugin<R> for Logger<R> {
-  fn name(&self) -> &'static str {
-    "log"
-  }
-
-  fn initialize(
-    &mut self,
-    app_handle: &AppHandle<R>,
-    _config: serde_json::Value,
-  ) -> PluginResult<()> {
-    let app_name = &app_handle.package_info().name;
-
-    let mut dispatch = self
-      .dispatch
-      .take()
-      .expect("failed to take dispatch from Option");
-
-    // setup targets
-    for target in &self.targets {
-      dispatch = dispatch.chain(match target {
-        LogTarget::Stdout => fern::Output::from(std::io::stdout()),
-        LogTarget::Stderr => fern::Output::from(std::io::stderr()),
-        LogTarget::Folder(path) => {
-          if !path.exists() {
-            fs::create_dir_all(&path).unwrap();
-          }
-
-          fern::log_file(get_log_file_path(
-            &path,
-            app_name,
-            &self.rotation_strategy,
-            self.max_file_size,
-          )?)?
-          .into()
-        }
-        LogTarget::LogDir => {
-          let path = app_handle.path_resolver().log_dir().unwrap();
-          if !path.exists() {
-            fs::create_dir_all(&path).unwrap();
-          }
-
-          fern::log_file(get_log_file_path(
-            &path,
-            app_name,
-            &self.rotation_strategy,
-            self.max_file_size,
-          )?)?
-          .into()
-        }
-        LogTarget::Webview => {
-          let app_handle = Mutex::new(app_handle.clone());
-
-          fern::Output::call(move |record| {
-            app_handle
-              .lock()
-              .unwrap()
-              .emit_all(
-                "log://log",
-                RecordPayload {
-                  message: *record.args(),
-                  level: record.level().into(),
-                },
-              )
-              .unwrap();
-          })
-        }
-      });
-    }
-
-    dispatch.apply()?;
-
-    Ok(())
-  }
-
-  fn extend_api(&mut self, message: Invoke<R>) {
-    (self.invoke_handler)(message)
-  }
-}
-
 fn get_log_file_path(
   dir: &impl AsRef<Path>,
   app_name: &str,
   rotation_strategy: &RotationStrategy,
   max_file_size: u128,
-) -> PluginResult<PathBuf> {
+) -> plugin::Result<PathBuf> {
   let path = dir.as_ref().join(format!("{}.log", app_name));
 
   if path.exists() {
