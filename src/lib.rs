@@ -215,12 +215,7 @@ impl LoggerBuilder {
     })
   }
 
-  pub fn build<R: Runtime>(mut self) -> TauriPlugin<R>
-  where
-    <R as tauri::Runtime>::GlobalShortcutManager: Sync,
-    <R as tauri::Runtime>::ClipboardManager: Sync,
-    <R as tauri::Runtime>::Handle: Sync,
-  {
+  pub fn build<R: Runtime>(mut self) -> TauriPlugin<R> {
     plugin::Builder::new("log")
       .invoke_handler(tauri::generate_handler![log])
       .setup(move |app_handle| {
