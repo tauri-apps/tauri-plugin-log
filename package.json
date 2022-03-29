@@ -33,8 +33,5 @@
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-rc.1",
     "tslib": "^2.3.1"
-  },
-  "peerDependencies": {
-    "type-fest": "^2.9.0"
   }
 }
