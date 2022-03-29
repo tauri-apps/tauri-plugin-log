@@ -7,7 +7,6 @@ use log::{debug, error, info, trace, warn, LevelFilter, Record};
 use serde::Serialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::borrow::Cow;
-use std::sync::Mutex;
 use std::{
   fmt::Arguments,
   fs::{self, File},
@@ -287,12 +286,10 @@ impl<R: Runtime> Plugin<R> for Logger<R> {
           .into()
         }
         LogTarget::Webview => {
-          let app_handle = Mutex::new(app_handle.clone());
+          let app_handle = app_handle.clone();
 
           fern::Output::call(move |record| {
             app_handle
-              .lock()
-              .unwrap()
               .emit_all(
                 "log://log",
                 RecordPayload {
