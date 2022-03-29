@@ -47,7 +47,7 @@
         },
         {
           "command": "yarn publish --access public --loglevel silly",
-          "dryRunCommand": "npm publish --dry-run --access public",
+          "dryRunCommand": "yarn publish --dry-run --access public",
           "pipe": true
         },
         {
