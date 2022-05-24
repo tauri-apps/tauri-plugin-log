@@ -11,7 +11,12 @@ fn main() {
   let colors = ColoredLevelConfig::default();
 
   tauri::Builder::default()
-    .plugin(LoggerBuilder::new().with_colors(colors).targets(targets).build())
+    .plugin(
+      LoggerBuilder::new()
+        .with_colors(colors)
+        .targets(targets)
+        .build(),
+    )
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

@@ -82,8 +82,8 @@ pub enum RotationStrategy {
 }
 
 #[derive(Debug, Serialize, Clone)]
-struct RecordPayload<'a> {
-  message: std::fmt::Arguments<'a>,
+struct RecordPayload {
+  message: String,
   level: LogLevel,
 }
 
@@ -257,15 +257,14 @@ impl LoggerBuilder {
               let app_handle = app_handle.clone();
 
               fern::Output::call(move |record| {
-                app_handle
-                  .emit_all(
-                    "log://log",
-                    RecordPayload {
-                      message: *record.args(),
-                      level: record.level().into(),
-                    },
-                  )
-                  .unwrap();
+                let payload = RecordPayload {
+                  message: record.args().to_string(),
+                  level: record.level().into(),
+                };
+                let app_handle = app_handle.clone();
+                tauri::async_runtime::spawn(async move {
+                  app_handle.emit_all("log://log", payload).unwrap();
+                });
               })
             }
           });

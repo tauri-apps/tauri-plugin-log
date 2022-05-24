@@ -99,12 +99,12 @@
     estree-walker "^1.0.1"
     picomatch "^2.2.2"
 
-"@tauri-apps/api@^1.0.0-rc.0":
-  version "1.0.0-rc.0"
-  resolved "https://registry.yarnpkg.com/@tauri-apps/api/-/api-1.0.0-rc.0.tgz#f9fa469923591a6e8294ffe906bf886ace2cb4d0"
-  integrity sha512-BOREst3Nq931RQTqNT5gbBw8E7wpjEr4PhSviAJwIWtKi3KGRxY5TmWyMO4j3kKmsZQQVoZ4dPwI2pQfNJYtKw==
+"@tauri-apps/api@^1.0.0-rc.1":
+  version "1.0.0-rc.5"
+  resolved "https://registry.yarnpkg.com/@tauri-apps/api/-/api-1.0.0-rc.5.tgz#6c4e8b103d730553d7e97dcb71fe707103d9bc97"
+  integrity sha512-IiQg7pLByl/W3KRx9Whn1EWh9ZrBojkl9FAgCRJ4//e58var1WmNPHA92YC0i0DLSIF0JLLp0EQKRHJa+aaqlQ==
   dependencies:
-    type-fest "2.11.2"
+    type-fest "2.12.2"
 
 "@tauri-apps/cli-darwin-arm64@1.0.0-rc.2":
   version "1.0.0-rc.2"
@@ -896,7 +896,7 @@ svelte@^3.0.0:
 tauri-plugin-log-api@../../:
   version "0.1.0"
   dependencies:
-    "@tauri-apps/api" "^1.0.0-rc.0"
+    "@tauri-apps/api" "^1.0.0-rc.1"
     tslib "^2.3.1"
 
 terser@^5.0.0:
@@ -930,10 +930,10 @@ tslib@^2.0.0, tslib@^2.3.1:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
   integrity sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
 
-type-fest@2.11.2:
-  version "2.11.2"
-  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-2.11.2.tgz#5534a919858bc517492cd3a53a673835a76d2e71"
-  integrity sha512-reW2Y2Mpn0QNA/5fvtm5doROLwDPu2zOm5RtY7xQQS05Q7xgC8MOZ3yPNaP9m/s/sNjjFQtHo7VCNqYW2iI+Ig==
+type-fest@2.12.2:
+  version "2.12.2"
+  resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-2.12.2.tgz#80a53614e6b9b475eb9077472fb7498dc7aa51d0"
+  integrity sha512-qt6ylCGpLjZ7AaODxbpyBZSs9fCI9SkL3Z9q2oxMBQhs/uyY+VD8jHA8ULCGmWQJlBgqvO3EJeAngOHD8zQCrQ==
 
 typescript@*, typescript@^4.0.0:
   version "4.5.4"
