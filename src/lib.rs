@@ -98,7 +98,7 @@ pub enum LogTarget {
   /// The plugin will ensure the directory exists before writing logs.
   Folder(PathBuf),
   /// Write logs to the OS specififc logs directory.
-  ///   
+  ///
   /// ### Platform-specific
   ///
   /// |Platform | Value                                         | Example                                        |
@@ -291,13 +291,18 @@ fn get_log_file_path(
     if log_size > max_file_size {
       match rotation_strategy {
         RotationStrategy::KeepAll => {
-          fs::rename(
-            &path,
-            dir.as_ref().join(format!(
-              "{}.log",
-              chrono::Local::now().format("app-%Y-%m-%d")
-            )),
-          )?;
+          let to = dir.as_ref().join(format!(
+            "{}.log",
+            chrono::Local::now().format("app_%Y-%m-%d_%H-%M-%S")
+          ));
+          if to.is_file() {
+            // designated rotated log file name already exists
+            // highly unlikely but defensively handle anyway by adding .bak to filename
+            let mut to_bak = to.clone();
+            to_bak.set_file_name(format!("{}.bak", to_bak.file_name().unwrap().to_string_lossy()));
+            fs::rename(&to, to_bak)?;
+          }
+          fs::rename(&path, to)?;
         }
         RotationStrategy::KeepOne => {
           fs::remove_file(&path)?;
