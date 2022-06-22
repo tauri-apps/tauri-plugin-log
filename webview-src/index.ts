@@ -35,16 +35,16 @@ enum LogLevel {
 }
 
 async function log(level: LogLevel, message: string): Promise<void> {
-  const traces = new Error().stack!.split('\n').map(line => line.split('@'));
+  const traces = new Error().stack?.split("\n").map((line) => line.split("@"));
 
   const filtered = traces?.filter(([name, location]) => {
-    return name.length && location !== '[native code]'
-  })
+    return name.length && location !== "[native code]";
+  });
 
   await invoke("plugin:log|log", {
     level,
     message,
-    location: filtered[0].join('@')
+    location: filtered?.[0]?.join("@")
   });
 }
 
