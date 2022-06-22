@@ -6,15 +6,13 @@
 use tauri_plugin_log::{LogTarget, LoggerBuilder};
 
 fn main() {
+  let targets = [
+    // LogTarget::AppDir("./logs".into()),
+    LogTarget::Stdout,
+    LogTarget::Webview,
+  ];
   tauri::Builder::default()
-  .plugin(
-    LoggerBuilder::new([
-      // LogTarget::AppDir("./logs".into()),
-      LogTarget::Stdout,
-      LogTarget::Webview,
-    ])
-    .build(),
-  )
+    .plugin(LoggerBuilder::new().targets(targets).build())
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
