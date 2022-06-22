@@ -11,8 +11,11 @@ fn main() {
     LogTarget::Stdout,
     LogTarget::Webview,
   ];
+
+  let context = tauri::generate_context!();
   tauri::Builder::default()
+    .menu(tauri::Menu::os_default(&context.package_info().name))
     .plugin(LoggerBuilder::new().targets(targets).build())
-    .run(tauri::generate_context!())
+    .run(context)
     .expect("error while running tauri application");
 }
