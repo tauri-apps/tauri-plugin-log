@@ -299,7 +299,10 @@ fn get_log_file_path(
             // designated rotated log file name already exists
             // highly unlikely but defensively handle anyway by adding .bak to filename
             let mut to_bak = to.clone();
-            to_bak.set_file_name(format!("{}.bak", to_bak.file_name().unwrap().to_string_lossy()));
+            to_bak.set_file_name(format!(
+              "{}.bak",
+              to_bak.file_name().unwrap().to_string_lossy()
+            ));
             fs::rename(&to, to_bak)?;
           }
           fs::rename(&path, to)?;
