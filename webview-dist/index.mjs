@@ -134,21 +134,22 @@ async function trace(message) {
 function attachConsole() {
     return listen("log://log", (event) => {
         const payload = event.payload;
+        const message = payload.message.replace(/\x1b\[[0-9;]*m/g, '');
         switch (payload.level) {
             case LogLevel.Trace:
-                console.log(payload.message);
+                console.log(message);
                 break;
             case LogLevel.Debug:
-                console.debug(payload.message);
+                console.debug(message);
                 break;
             case LogLevel.Info:
-                console.info(payload.message);
+                console.info(message);
                 break;
             case LogLevel.Warn:
-                console.warn(payload.message);
+                console.warn(message);
                 break;
             case LogLevel.Error:
-                console.error(payload.message);
+                console.error(message);
                 break;
             default:
                 throw new Error(`unknown log level ${payload.level}`);
