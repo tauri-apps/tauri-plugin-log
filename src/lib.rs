@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use fern::FormatCallback;
-use log::{debug, error, info, trace, warn, LevelFilter, Record};
+use log::{LevelFilter, Record};
 use serde::Serialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::borrow::Cow;
@@ -114,14 +114,10 @@ pub enum LogTarget {
 }
 
 #[tauri::command]
-fn log(level: LogLevel, message: String) {
-  match level {
-    LogLevel::Trace => trace!("{}", message),
-    LogLevel::Debug => debug!("{}", message),
-    LogLevel::Info => info!("{}", message),
-    LogLevel::Warn => warn!("{}", message),
-    LogLevel::Error => error!("{}", message),
-  }
+fn log(level: LogLevel, message: String, location: Option<&str>) {
+  let location = location.unwrap_or("webview");
+
+  log::log!(target: location, level.into(), "{}", message)
 }
 
 pub struct LoggerBuilder {

@@ -35,9 +35,15 @@ var LogLevel;
     LogLevel[LogLevel["Error"] = 5] = "Error";
 })(LogLevel || (LogLevel = {}));
 async function log(level, message) {
+    var _a, _b;
+    const traces = (_a = new Error().stack) === null || _a === void 0 ? void 0 : _a.split("\n").map((line) => line.split("@"));
+    const filtered = traces === null || traces === void 0 ? void 0 : traces.filter(([name, location]) => {
+        return name.length && location !== "[native code]";
+    });
     await invoke("plugin:log|log", {
         level,
         message,
+        location: (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.join("@")
     });
 }
 /**
