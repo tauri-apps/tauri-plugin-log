@@ -292,8 +292,9 @@ fn get_log_file_path(
       match rotation_strategy {
         RotationStrategy::KeepAll => {
           let to = dir.as_ref().join(format!(
-            "{}.log",
-            chrono::Local::now().format("app_%Y-%m-%d_%H-%M-%S")
+            "{}_{}.log",
+            app_name,
+            chrono::Local::now().format("%Y-%m-%d_%H-%M-%S")
           ));
           if to.is_file() {
             // designated rotated log file name already exists
