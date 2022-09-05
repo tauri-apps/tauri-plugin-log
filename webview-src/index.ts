@@ -1,5 +1,5 @@
-import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from "@tauri-apps/api/event";
+import {invoke} from '@tauri-apps/api/tauri'
+import {listen} from '@tauri-apps/api/event'
 
 enum LogLevel {
   /**
@@ -31,21 +31,21 @@ enum LogLevel {
    *
    * Designates very serious errors.
    */
-  Error,
+  Error
 }
 
 async function log(level: LogLevel, message: string): Promise<void> {
-  const traces = new Error().stack?.split("\n").map((line) => line.split("@"));
+  const traces = new Error().stack?.split('\n').map(line => line.split('@'))
 
   const filtered = traces?.filter(([name, location]) => {
-    return name.length && location !== "[native code]";
-  });
+    return name.length && location !== '[native code]'
+  })
 
-  await invoke("plugin:log|log", {
+  await invoke('plugin:log|log', {
     level,
     message,
-    location: filtered?.[0]?.join("@")
-  });
+    location: filtered?.[0]?.join('@')
+  })
 }
 
 /**
@@ -65,7 +65,7 @@ async function log(level: LogLevel, message: string): Promise<void> {
  * ```
  */
 export async function error(message: string): Promise<void> {
-  await log(LogLevel.Error, message);
+  await log(LogLevel.Error, message)
 }
 
 /**
@@ -84,7 +84,7 @@ export async function error(message: string): Promise<void> {
  * ```
  */
 export async function warn(message: string): Promise<void> {
-  await log(LogLevel.Warn, message);
+  await log(LogLevel.Warn, message)
 }
 
 /**
@@ -103,7 +103,7 @@ export async function warn(message: string): Promise<void> {
  * ```
  */
 export async function info(message: string): Promise<void> {
-  await log(LogLevel.Info, message);
+  await log(LogLevel.Info, message)
 }
 
 /**
@@ -122,7 +122,7 @@ export async function info(message: string): Promise<void> {
  * ```
  */
 export async function debug(message: string): Promise<void> {
-  await log(LogLevel.Debug, message);
+  await log(LogLevel.Debug, message)
 }
 
 /**
@@ -141,36 +141,36 @@ export async function debug(message: string): Promise<void> {
  * ```
  */
 export async function trace(message: string): Promise<void> {
-  await log(LogLevel.Trace, message);
+  await log(LogLevel.Trace, message)
 }
 
 interface RecordPayload {
-  level: LogLevel;
-  message: string;
+  level: LogLevel
+  message: string
 }
 
 export function attachConsole() {
-  return listen("log://log", (event) => {
-    const payload = event.payload as RecordPayload;
+  return listen('log://log', event => {
+    const payload = event.payload as RecordPayload
 
     switch (payload.level) {
       case LogLevel.Trace:
-        console.log(payload.message);
-        break;
+        console.log(payload.message)
+        break
       case LogLevel.Debug:
-        console.debug(payload.message);
-        break;
+        console.debug(payload.message)
+        break
       case LogLevel.Info:
-        console.info(payload.message);
-        break;
+        console.info(payload.message)
+        break
       case LogLevel.Warn:
-        console.warn(payload.message);
-        break;
+        console.warn(payload.message)
+        break
       case LogLevel.Error:
-        console.error(payload.message);
-        break;
+        console.error(payload.message)
+        break
       default:
-        throw new Error(`unknown log level ${payload.level}`);
+        throw new Error(`unknown log level ${payload.level}`)
     }
-  });
+  })
 }
