@@ -26,3 +26,6 @@ features = [ "colored" ]
 
 [features]
 colored = ["fern/colored"]
+
+[workspace]
+members = ["examples/*/src-tauri"]
