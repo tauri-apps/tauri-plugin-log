@@ -21,5 +21,8 @@ log = "0.4"
 chrono = "0.4"
 tauri = "1.0"
 
+[package.metadata.docs.rs]
+features = [ "colored" ]
+
 [features]
 colored = ["fern/colored"]
