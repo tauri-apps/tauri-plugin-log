@@ -15,7 +15,7 @@ Remember to replace this with a proper package from crates.io when it becomes av
 
 ### RUST
 `src-tauri/Cargo.toml`
-```yaml
+```toml
 [dependencies.tauri-plugin-log]
 git = "https://github.com/tauri-apps/tauri-plugin-log"
 branch = "dev"
@@ -53,6 +53,14 @@ fn main() {
         .run();
 }
 ```
+
+To log from rust code, add the `log` crate to your `cargo.toml`:
+```toml
+[dependencies]
+log = "^0.4"
+```
+Now, you can use the macros provided by the `log` crate to log messages from your backend.
+See the [docs](https://docs.rs/log/latest) for more details.
 
 ### WEBVIEW
 
