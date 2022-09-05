@@ -4,7 +4,12 @@ version = "0.1.0"
 authors = [ "Tauri Programme within The Commons Conservancy" ]
 license = "Apache-2.0 OR MIT"
 edition = "2021"
+rust-version = "1.57"
 description = "Configurable logging for your Tauri app."
+readme = "README.md"
+repository = "https://github.com/tauri-apps/tauri-plugin-log"
+categories = [ "gui", "development-tools::debugging" ]
+keywords = ["logging", "tauri-plugin"]
 
 [dependencies]
 serde = "1.0"

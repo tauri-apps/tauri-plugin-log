@@ -6,6 +6,11 @@
   "authors": [
     "Tauri Programme within The Commons Conservancy"
   ],
+  "keywords": [
+    "logging",
+    "tauri-plugin"
+  ],
+  "repository": "https://github.com/tauri-apps/tauri-plugin-log",
   "type": "module",
   "browser": "webview-dist/index.min.js",
   "types": "webview-dist/index.d.ts",
