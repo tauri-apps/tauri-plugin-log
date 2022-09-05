@@ -13,9 +13,7 @@ export default [
     plugins: [
       resolve(),
       terser(),
-      typescript({
-        tsconfig: "./webview-src/tsconfig.json",
-      }),
+      typescript(),
     ],
   },
   {
@@ -27,9 +25,7 @@ export default [
       format: "esm",
     },
     plugins: [
-      typescript({
-        tsconfig: "./webview-src/tsconfig.json",
-      }),
+      typescript(),
     ],
   },
 ];

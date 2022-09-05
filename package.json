@@ -20,7 +20,7 @@
   ],
   "packageManager": "pnpm@7.11.0",
   "scripts": {
-    "build": "rollup -c ./webview-src/rollup.config.js",
+    "build": "rollup -c rollup.config.js",
     "prepublishOnly": "yarn build",
     "pretest": "yarn build",
     "format": "prettier --write '**/*.ts'",
