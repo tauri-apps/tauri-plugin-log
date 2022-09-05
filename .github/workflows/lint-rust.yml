@@ -1,22 +1,31 @@
-name: Clippy
+name: Lint Rust
 
 on:
   push:
     branches:
-      - main
+      - dev
+    paths:
+      - '.github/workflows/lint.yml'
+      - 'src/**'
   pull_request:
     branches:
-      - main
       - dev
+    paths:
+      - '.github/workflows/lint.yml'
+      - 'src/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  clippy:
+  lint-rust:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3  
       - name: install webkit2gtk
         run: |
           sudo apt-get update
@@ -28,6 +37,7 @@ jobs:
             toolchain: stable
             override: true
             components: clippy
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

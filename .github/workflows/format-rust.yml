@@ -1,22 +1,26 @@
-name: Format
+name: Format Rust
 
 on:
   push:
     branches:
-      - main
+      - dev
+    paths:
+      - '.github/workflows/format-rust.yml'
+      - 'src/**'
   pull_request:
     branches:
-      - main
       - dev
+    paths:
+      - '.github/workflows/format-rust.yml'
+      - 'src/**'
 
 jobs:
-  format:
+  format-rust:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install rustfmt with nightly toolchain
       uses: actions-rs/toolchain@v1
       with:
