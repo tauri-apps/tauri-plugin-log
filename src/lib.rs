@@ -129,10 +129,13 @@ pub struct LoggerBuilder {
 
 impl Default for LoggerBuilder {
   fn default() -> Self {
+    let format =
+      time::format_description::parse("[[[year]-[month]-[day]][[[hour]:[minute]:[second]]")
+        .unwrap();
     let dispatch = fern::Dispatch::new().format(move |out, message, record| {
       out.finish(format_args!(
         "{}[{}][{}] {}",
-        chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+        time::OffsetDateTime::now_utc().format(&format).unwrap(),
         record.target(),
         record.level(),
         message
@@ -200,10 +203,13 @@ impl LoggerBuilder {
 
   #[cfg(feature = "colored")]
   pub fn with_colors(self, colors: fern::colors::ColoredLevelConfig) -> Self {
+    let format =
+      time::format_description::parse("[[[year]-[month]-[day]][[[hour]:[minute]:[second]]")
+        .unwrap();
     self.format(move |out, message, record| {
       out.finish(format_args!(
         "{}[{}][{}] {}",
-        chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+        time::OffsetDateTime::now_utc().format(&format).unwrap(),
         record.target(),
         colors.color(record.level()),
         message
@@ -290,7 +296,14 @@ fn get_log_file_path(
           let to = dir.as_ref().join(format!(
             "{}_{}.log",
             app_name,
-            chrono::Local::now().format("%Y-%m-%d_%H-%M-%S")
+            time::OffsetDateTime::now_utc()
+              .format(
+                &time::format_description::parse(
+                  "[[[year]-[month]-[day]][[[hour]:[minute]:[second]]"
+                )
+                .unwrap()
+              )
+              .unwrap(),
           ));
           if to.is_file() {
             // designated rotated log file name already exists
