@@ -38,7 +38,7 @@ async function log(level, message, options) {
     var _a, _b;
     const traces = (_a = new Error().stack) === null || _a === void 0 ? void 0 : _a.split("\n").map((line) => line.split("@"));
     const filtered = traces === null || traces === void 0 ? void 0 : traces.filter(([name, location]) => {
-        return name.length && location !== "[native code]";
+        return name.length > 0 && location !== "[native code]";
     });
     const { file, line, ...keyValues } = options !== null && options !== void 0 ? options : {};
     await invoke("plugin:log|log", {

@@ -45,7 +45,7 @@ async function log(level: LogLevel, message: string, options?: LogOptions): Prom
   const traces = new Error().stack?.split("\n").map((line) => line.split("@"));
 
   const filtered = traces?.filter(([name, location]) => {
-    return name.length && location !== "[native code]";
+    return name.length > 0 && location !== "[native code]";
   });
 
   const { file, line, ...keyValues } = options ?? {}
