@@ -1,3 +1,9 @@
+export declare type LogOptions = {
+    file?: string;
+    line?: number;
+} & {
+    [key: string]: string | undefined;
+};
 /**
  * Logs a message at the error level.
  *
@@ -14,7 +20,7 @@
  * error(`Error: ${err_info} on port ${port}`);
  * ```
  */
-export declare function error(message: string): Promise<void>;
+export declare function error(message: string, options?: LogOptions): Promise<void>;
 /**
  * Logs a message at the warn level.
  *
@@ -30,7 +36,7 @@ export declare function error(message: string): Promise<void>;
  * warn(`Warning! {warn_description}!`);
  * ```
  */
-export declare function warn(message: string): Promise<void>;
+export declare function warn(message: string, options?: LogOptions): Promise<void>;
 /**
  * Logs a message at the info level.
  *
@@ -46,7 +52,7 @@ export declare function warn(message: string): Promise<void>;
  * info(`Connected to port {conn_info.port} at {conn_info.speed} Mb/s`);
  * ```
  */
-export declare function info(message: string): Promise<void>;
+export declare function info(message: string, options?: LogOptions): Promise<void>;
 /**
  * Logs a message at the debug level.
  *
@@ -62,7 +68,7 @@ export declare function info(message: string): Promise<void>;
  * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-export declare function debug(message: string): Promise<void>;
+export declare function debug(message: string, options?: LogOptions): Promise<void>;
 /**
  * Logs a message at the trace level.
  *
@@ -78,5 +84,5 @@ export declare function debug(message: string): Promise<void>;
  * trace(`Position is: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-export declare function trace(message: string): Promise<void>;
+export declare function trace(message: string, options?: LogOptions): Promise<void>;
 export declare function attachConsole(): Promise<import("@tauri-apps/api/event").UnlistenFn>;

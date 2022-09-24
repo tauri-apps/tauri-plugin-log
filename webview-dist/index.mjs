@@ -34,16 +34,20 @@ var LogLevel;
      */
     LogLevel[LogLevel["Error"] = 5] = "Error";
 })(LogLevel || (LogLevel = {}));
-async function log(level, message) {
+async function log(level, message, options) {
     var _a, _b;
     const traces = (_a = new Error().stack) === null || _a === void 0 ? void 0 : _a.split("\n").map((line) => line.split("@"));
     const filtered = traces === null || traces === void 0 ? void 0 : traces.filter(([name, location]) => {
         return name.length && location !== "[native code]";
     });
+    const { file, line, ...keyValues } = options !== null && options !== void 0 ? options : {};
     await invoke("plugin:log|log", {
         level,
         message,
-        location: (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.join("@")
+        location: (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.join("@"),
+        file,
+        line,
+        keyValues
     });
 }
 /**
@@ -62,8 +66,8 @@ async function log(level, message) {
  * error(`Error: ${err_info} on port ${port}`);
  * ```
  */
-async function error(message) {
-    await log(LogLevel.Error, message);
+async function error(message, options) {
+    await log(LogLevel.Error, message, options);
 }
 /**
  * Logs a message at the warn level.
@@ -80,8 +84,8 @@ async function error(message) {
  * warn(`Warning! {warn_description}!`);
  * ```
  */
-async function warn(message) {
-    await log(LogLevel.Warn, message);
+async function warn(message, options) {
+    await log(LogLevel.Warn, message, options);
 }
 /**
  * Logs a message at the info level.
@@ -98,8 +102,8 @@ async function warn(message) {
  * info(`Connected to port {conn_info.port} at {conn_info.speed} Mb/s`);
  * ```
  */
-async function info(message) {
-    await log(LogLevel.Info, message);
+async function info(message, options) {
+    await log(LogLevel.Info, message, options);
 }
 /**
  * Logs a message at the debug level.
@@ -116,8 +120,8 @@ async function info(message) {
  * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-async function debug(message) {
-    await log(LogLevel.Debug, message);
+async function debug(message, options) {
+    await log(LogLevel.Debug, message, options);
 }
 /**
  * Logs a message at the trace level.
@@ -134,8 +138,8 @@ async function debug(message) {
  * trace(`Position is: x: {pos.x}, y: {pos.y}`);
  * ```
  */
-async function trace(message) {
-    await log(LogLevel.Trace, message);
+async function trace(message, options) {
+    await log(LogLevel.Trace, message, options);
 }
 function attachConsole() {
     return listen("log://log", (event) => {

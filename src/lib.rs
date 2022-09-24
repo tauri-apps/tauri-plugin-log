@@ -3,10 +3,12 @@
 // SPDX-License-Identifier: MIT
 
 use fern::FormatCallback;
+use log::{logger, RecordBuilder};
 use log::{LevelFilter, Record};
 use serde::Serialize;
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::{
   fmt::Arguments,
   fs::{self, File},
@@ -114,10 +116,30 @@ pub enum LogTarget {
 }
 
 #[tauri::command]
-fn log(level: LogLevel, message: String, location: Option<&str>) {
+fn log(
+  level: LogLevel,
+  message: String,
+  location: Option<&str>,
+  file: Option<&str>,
+  line: Option<u32>,
+  key_values: Option<HashMap<String, String>>,
+) {
   let location = location.unwrap_or("webview");
+  let mut builder = RecordBuilder::new();
+  builder
+    .target(location)
+    .level(level.into())
+    .file(file)
+    .line(line);
 
-  log::log!(target: location, level.into(), "{}", message)
+  let key_values = key_values.unwrap_or_default();
+  let mut kv = HashMap::new();
+  for (k, v) in key_values.iter() {
+    kv.insert(k.as_str(), v.as_str());
+  }
+  builder.key_values(&kv);
+
+  logger().log(&builder.args(format_args!("{message}")).build());
 }
 
 pub struct LoggerBuilder {
