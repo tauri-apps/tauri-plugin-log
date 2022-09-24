@@ -53,7 +53,7 @@ async function log(level: LogLevel, message: string, options?: LogOptions): Prom
   await invoke("plugin:log|log", {
     level,
     message,
-    location: filtered?.[0]?.join("@"),
+    location: filtered?.[0]?.filter(v => v.length > 0).join("@"),
     file,
     line,
     keyValues

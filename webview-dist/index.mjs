@@ -44,7 +44,7 @@ async function log(level, message, options) {
     await invoke("plugin:log|log", {
         level,
         message,
-        location: (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.join("@"),
+        location: (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.filter(v => v.length > 0).join("@"),
         file,
         line,
         keyValues
