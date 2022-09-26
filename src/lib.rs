@@ -308,11 +308,6 @@ fn get_log_file_path(
   rotation_strategy: &RotationStrategy,
   max_file_size: u128,
 ) -> plugin::Result<PathBuf> {
-  let app_name = app_name
-    .replace(' ', "_")
-    .chars()
-    .filter(|c| c.is_alphanumeric())
-    .collect::<String>();
   let path = dir.as_ref().join(format!("{}.log", app_name));
 
   if path.exists() {
@@ -325,10 +320,8 @@ fn get_log_file_path(
             app_name,
             time::OffsetDateTime::now_utc()
               .format(
-                &time::format_description::parse(
-                  "[[[year]-[month]-[day]][[[hour]:[minute]:[second]]"
-                )
-                .unwrap()
+                &time::format_description::parse("[year]-[month]-[day]_[hour]-[minute]-[second]")
+                  .unwrap()
               )
               .unwrap(),
           ));
