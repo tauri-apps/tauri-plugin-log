@@ -48,7 +48,7 @@ async function log(level: LogLevel, message: string, options?: LogOptions): Prom
     return name.length > 0 && location !== "[native code]";
   });
 
-  const { file, line, ...keyValues } = options ?? {}
+  const {file, line, ...keyValues} = options ?? {}
 
   await invoke("plugin:log|log", {
     level,
@@ -77,7 +77,11 @@ async function log(level: LogLevel, message: string, options?: LogOptions): Prom
  * ```
  */
 export async function error(message: string, options?: LogOptions): Promise<void> {
-  await log(LogLevel.Error, message, options);
+  if (typeof window.__TAURI_IPC__ === 'function') {
+    await log(LogLevel.Error, message, options);
+  } else {
+    console.error(message)
+  }
 }
 
 /**
@@ -96,7 +100,11 @@ export async function error(message: string, options?: LogOptions): Promise<void
  * ```
  */
 export async function warn(message: string, options?: LogOptions): Promise<void> {
-  await log(LogLevel.Warn, message, options);
+  if (typeof window.__TAURI_IPC__ === 'function') {
+    await log(LogLevel.Warn, message, options);
+  } else {
+    console.warn(message)
+  }
 }
 
 /**
@@ -115,7 +123,11 @@ export async function warn(message: string, options?: LogOptions): Promise<void>
  * ```
  */
 export async function info(message: string, options?: LogOptions): Promise<void> {
-  await log(LogLevel.Info, message, options);
+  if (typeof window.__TAURI_IPC__ === 'function') {
+    await log(LogLevel.Info, message, options);
+  } else {
+    console.info(message)
+  }
 }
 
 /**
@@ -134,7 +146,11 @@ export async function info(message: string, options?: LogOptions): Promise<void>
  * ```
  */
 export async function debug(message: string, options?: LogOptions): Promise<void> {
-  await log(LogLevel.Debug, message, options);
+  if (typeof window.__TAURI_IPC__ === 'function') {
+    await log(LogLevel.Debug, message, options);
+  } else {
+    console.debug(message)
+  }
 }
 
 /**
@@ -153,7 +169,11 @@ export async function debug(message: string, options?: LogOptions): Promise<void
  * ```
  */
 export async function trace(message: string, options?: LogOptions): Promise<void> {
-  await log(LogLevel.Trace, message, options);
+  if (typeof window.__TAURI_IPC__ === 'function') {
+    await log(LogLevel.Trace, message, options);
+  } else {
+    console.trace(message)
+  }
 }
 
 interface RecordPayload {
