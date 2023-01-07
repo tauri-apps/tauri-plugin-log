@@ -1,19 +1,20 @@
 [package]
 name = "tauri-plugin-log"
 version = "0.1.0"
-authors = [ "Tauri Programme within The Commons Conservancy" ]
-license = "Apache-2.0 OR MIT"
-edition = "2021"
+description = "Configurable logging for your Tauri app."
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = "1.0"
-serde_json = "1.0"
+serde.workspace = true
+serde_json.workspace = true
+tauri.workspace = true
 serde_repr = "0.1"
 byte-unit = "4.0"
 fern = "0.6"
-log = { version = "0.4", features = ["kv_unstable"] }
+log = { workspace = true, features = ["kv_unstable"] }
 time = { version = "0.3", features = ["formatting"] }
-tauri = "1"
-
-[features]
-colored = ["fern/colored"]

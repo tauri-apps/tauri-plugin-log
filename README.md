@@ -1,79 +1,88 @@
-# Tauri Plugin Log
+![plugin-log](banner.png)
 
-This plugin provides configurable interfaces for capturing and storing logs.
+Configurable logging for your Tauri app.
 
-## Installation
+## Install
+
 There are three general methods of installation that we can recommend.
-1. Pull sources directly from Github using git tags / revision hashes (most secure, good for developement, shown below)
-2. Git submodule install this repo in your tauri project and then use `file` protocol to ingest the source
-3. Use crates.io and npm (easiest, and requires you to trust that our publishing pipeline worked). **These packages are not yet available.**
 
-For more details and usage see [the example app](examples/svelte-app). Please note, below in the dependencies you can also lock to a revision/tag in both the `Cargo.toml` and `package.json`
+1. Use crates.io and npm (easiest, and requires you to trust that our publishing pipeline worked)
+2. Pull sources directly from Github using git tags / revision hashes (most secure)
+3. Git submodule install this repo in your tauri project and then use file protocol to ingest the source (most secure, but inconvenient to use)
 
-Note that the instructions below will install the latest development version, which should not be considered stable.
-Remember to replace this with a proper package from crates.io when it becomes available.
+Install the Core plugin by adding the following to your `Cargo.toml` file:
 
-### RUST
 `src-tauri/Cargo.toml`
+
 ```toml
-[dependencies.tauri-plugin-log]
-git = "https://github.com/tauri-apps/tauri-plugin-log"
-branch = "dev"
+[dependencies]
+tauri-plugin-log = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "dev" }
 ```
 
-### WEBVIEW
-`Install from a tagged release`
-```
-npm install github:tauri-apps/tauri-plugin-log#dev
+You can install the JavaScript Guest bindings using your preferred JavaScript package manager:
+
+> Note: Since most JavaScript package managers are unable to install packages from git monorepos we provide read-only mirrors of each plugin. This makes installation option 2 more ergonomic to use.
+
+```sh
+pnpm add https://github.com/tauri-apps/tauri-plugin-log
 # or
-yarn add github:tauri-apps/tauri-plugin-log#dev
-```
-
-`package.json`
-```json
-  "dependencies": {
-    "tauri-plugin-log-api": "github:tauri-apps/tauri-plugin-log#dev",
+npm add https://github.com/tauri-apps/tauri-plugin-log
+# or
+yarn add https://github.com/tauri-apps/tauri-plugin-log
 ```
 
 ## Usage
 
-### RUST
+First you need to register the core plugin with Tauri:
 
-Use in `src-tauri/src/main.rs`:
+`src-tauri/src/main.rs`
+
 ```rust
-use tauri_plugin_log::{LogTarget, LoggerBuilder};
+use tauri_plugin_log::{LogTarget};
+
 fn main() {
     tauri::Builder::default()
-        .plugin(LoggerBuilder::default().targets([
+        .plugin(tauri_plugin_log::Builder::default().targets([
             LogTarget::LogDir,
             LogTarget::Stdout,
             LogTarget::Webview,
         ]).build())
-        .build()
-        .run();
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
 ```
 
-To log from rust code, add the `log` crate to your `cargo.toml`:
+Afterwards all the plugin's APIs are available through the JavaScript guest bindings:
+
+```javascript
+import { trace, info, error, attachConsole } from "tauri-plugin-log-api";
+
+// with LogTarget::Webview enabled this function will print logs to the browser console
+const detach = await attachConsole();
+
+trace("Trace");
+info("Info");
+error("Error");
+
+// detach the browser console from the log stream
+detach();
+```
+
+To log from rust code, add the log crate to your `Cargo.toml`:
+
 ```toml
 [dependencies]
 log = "^0.4"
 ```
-Now, you can use the macros provided by the `log` crate to log messages from your backend.
-See the [docs](https://docs.rs/log/latest) for more details.
 
-### WEBVIEW
+Now, you can use the macros provided by the log crate to log messages from your backend. See the [docs](https://docs.rs/log/latest) for more details.
 
-```ts
-import { trace, info, error, attachConsole } from 'tauri-plugin-log-api'
+## Contributing
 
-// with LogTarget::Webview enabled this function will print logs to the browser console
-const detach = await attachConsole()
+PRs accepted. Please make sure to read the Contributing Guide before making a pull request.
 
-trace("Trace")
-info("Info")
-error("Error")
+## License
 
-// detach the browser console from the log stream
-detach()
-```
+Code: (c) 2015 - Present - The Tauri Programme within The Commons Conservancy.
+
+MIT or MIT/Apache 2.0 where applicable.
