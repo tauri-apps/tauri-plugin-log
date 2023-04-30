@@ -41,10 +41,14 @@ async function log(level, message, options) {
         return name.length > 0 && location !== "[native code]";
     });
     const { file, line, ...keyValues } = options !== null && options !== void 0 ? options : {};
+    let location = (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.filter((v) => v.length > 0).join("@");
+    if (location === "Error") {
+        location = "webview::unknown";
+    }
     await invoke("plugin:log|log", {
         level,
         message,
-        location: (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.filter((v) => v.length > 0).join("@"),
+        location,
         file,
         line,
         keyValues,
