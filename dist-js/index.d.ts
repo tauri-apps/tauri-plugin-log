@@ -2,7 +2,8 @@ import { UnlistenFn } from "@tauri-apps/api/event";
 export type LogOptions = {
     file?: string;
     line?: number;
-} & Record<string, string | undefined>;
+    keyValues?: Record<string, string | undefined>;
+};
 /**
  * Logs a message at the error level.
  *
