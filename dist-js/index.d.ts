@@ -11,7 +11,7 @@ export type LogOptions = {
  * # Examples
  *
  * ```js
- * import { error } from 'tauri-plugin-log-api';
+ * import { error } from '@tauri-apps/plugin-log';
  *
  * const err_info = "No connection";
  * const port = 22;
@@ -28,7 +28,7 @@ export declare function error(message: string, options?: LogOptions): Promise<vo
  * # Examples
  *
  * ```js
- * import { warn } from 'tauri-plugin-log-api';
+ * import { warn } from '@tauri-apps/plugin-log';
  *
  * const warn_description = "Invalid Input";
  *
@@ -44,7 +44,7 @@ export declare function warn(message: string, options?: LogOptions): Promise<voi
  * # Examples
  *
  * ```js
- * import { info } from 'tauri-plugin-log-api';
+ * import { info } from '@tauri-apps/plugin-log';
  *
  * const conn_info = { port: 40, speed: 3.20 };
  *
@@ -60,7 +60,7 @@ export declare function info(message: string, options?: LogOptions): Promise<voi
  * # Examples
  *
  * ```js
- * import { debug } from 'tauri-plugin-log-api';
+ * import { debug } from '@tauri-apps/plugin-log';
  *
  * const pos = { x: 3.234, y: -1.223 };
  *
@@ -76,7 +76,7 @@ export declare function debug(message: string, options?: LogOptions): Promise<vo
  * # Examples
  *
  * ```js
- * import { trace } from 'tauri-plugin-log-api';
+ * import { trace } from '@tauri-apps/plugin-log';
  *
  * let pos = { x: 3.234, y: -1.223 };
  *
