@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { listen } from '@tauri-apps/api/event';
 
+// Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 var LogLevel;
 (function (LogLevel) {
     /**
