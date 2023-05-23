@@ -1,4 +1,9 @@
 import { UnlistenFn } from "@tauri-apps/api/event";
+declare global {
+    interface Window {
+        __TAURI_INVOKE__: <T>(cmd: string, args?: unknown) => Promise<T>;
+    }
+}
 export type LogOptions = {
     file?: string;
     line?: number;

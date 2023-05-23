@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/tauri';
 import { listen } from '@tauri-apps/api/event';
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
@@ -46,7 +45,7 @@ async function log(level, message, options) {
     if (location === "Error") {
         location = "webview::unknown";
     }
-    await invoke("plugin:log|log", {
+    await window.__TAURI_INVOKE__("plugin:log|log", {
         level,
         message,
         location,
