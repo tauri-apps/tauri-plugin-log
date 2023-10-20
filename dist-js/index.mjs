@@ -1,4 +1,5 @@
 import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/primitives';
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
@@ -47,7 +48,7 @@ async function log(level, message, options) {
     if (location === "Error") {
         location = "webview::unknown";
     }
-    await window.__TAURI_INVOKE__("plugin:log|log", {
+    await invoke("plugin:log|log", {
         level,
         message,
         location,
