@@ -1,7 +1,7 @@
 'use strict';
 
 var event = require('@tauri-apps/api/event');
-var primitives = require('@tauri-apps/api/primitives');
+var core = require('@tauri-apps/api/core');
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
@@ -49,7 +49,7 @@ async function log(level, message, options) {
     if (location === "Error") {
         location = "webview::unknown";
     }
-    await primitives.invoke("plugin:log|log", {
+    await core.invoke("plugin:log|log", {
         level,
         message,
         location,
