@@ -1,9 +1,41 @@
-import { UnlistenFn } from "@tauri-apps/api/event";
+import { type UnlistenFn } from "@tauri-apps/api/event";
 export type LogOptions = {
     file?: string;
     line?: number;
     keyValues?: Record<string, string | undefined>;
 };
+declare enum LogLevel {
+    /**
+     * The "trace" level.
+     *
+     * Designates very low priority, often extremely verbose, information.
+     */
+    Trace = 1,
+    /**
+     * The "debug" level.
+     *
+     * Designates lower priority information.
+     */
+    Debug = 2,
+    /**
+     * The "info" level.
+     *
+     * Designates useful information.
+     */
+    Info = 3,
+    /**
+     * The "warn" level.
+     *
+     * Designates hazardous situations.
+     */
+    Warn = 4,
+    /**
+     * The "error" level.
+     *
+     * Designates very serious errors.
+     */
+    Error = 5
+}
 /**
  * Logs a message at the error level.
  *
@@ -85,4 +117,22 @@ export declare function debug(message: string, options?: LogOptions): Promise<vo
  * ```
  */
 export declare function trace(message: string, options?: LogOptions): Promise<void>;
+interface RecordPayload {
+    level: LogLevel;
+    message: string;
+}
+type LoggerFn = (fn: RecordPayload) => void;
+/**
+ * Attaches a listener for the log, and calls the passed function for each log entry.
+ * @param fn
+ *
+ * @returns a function to cancel the listener.
+ */
+export declare function attachLogger(fn: LoggerFn): Promise<UnlistenFn>;
+/**
+ * Attaches a listener that writes log entries to the console as they come in.
+ *
+ * @returns a function to cancel the listener.
+ */
 export declare function attachConsole(): Promise<UnlistenFn>;
+export {};

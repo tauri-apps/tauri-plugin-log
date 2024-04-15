@@ -1,7 +1,7 @@
 'use strict';
 
-var event = require('@tauri-apps/api/event');
 var core = require('@tauri-apps/api/core');
+var event = require('@tauri-apps/api/event');
 
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
@@ -149,15 +149,32 @@ async function debug(message, options) {
 async function trace(message, options) {
     await log(LogLevel.Trace, message, options);
 }
-async function attachConsole() {
+/**
+ * Attaches a listener for the log, and calls the passed function for each log entry.
+ * @param fn
+ *
+ * @returns a function to cancel the listener.
+ */
+async function attachLogger(fn) {
     return await event.listen("log://log", (event) => {
-        const payload = event.payload;
+        const { level } = event.payload;
+        let { message } = event.payload;
         // Strip ANSI escape codes
-        const message = payload.message.replace(
+        message = message.replace(
         // TODO: Investigate security/detect-unsafe-regex
         // eslint-disable-next-line no-control-regex, security/detect-unsafe-regex
         /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");
-        switch (payload.level) {
+        fn({ message, level });
+    });
+}
+/**
+ * Attaches a listener that writes log entries to the console as they come in.
+ *
+ * @returns a function to cancel the listener.
+ */
+async function attachConsole() {
+    return attachLogger(({ level, message }) => {
+        switch (level) {
             case LogLevel.Trace:
                 console.log(message);
                 break;
@@ -175,12 +192,13 @@ async function attachConsole() {
                 break;
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                throw new Error(`unknown log level ${payload.level}`);
+                throw new Error(`unknown log level ${level}`);
         }
     });
 }
 
 exports.attachConsole = attachConsole;
+exports.attachLogger = attachLogger;
 exports.debug = debug;
 exports.error = error;
 exports.info = info;
