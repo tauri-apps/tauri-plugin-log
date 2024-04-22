@@ -173,7 +173,7 @@ async function attachLogger(fn) {
  * @returns a function to cancel the listener.
  */
 async function attachConsole() {
-    return attachLogger(({ level, message }) => {
+    return await attachLogger(({ level, message }) => {
         switch (level) {
             case LogLevel.Trace:
                 console.log(message);

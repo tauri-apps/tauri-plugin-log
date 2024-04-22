@@ -1,9 +1,9 @@
 import { type UnlistenFn } from "@tauri-apps/api/event";
-export type LogOptions = {
+export interface LogOptions {
     file?: string;
     line?: number;
     keyValues?: Record<string, string | undefined>;
-};
+}
 declare enum LogLevel {
     /**
      * The "trace" level.
