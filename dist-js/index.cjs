@@ -40,22 +40,22 @@ var LogLevel;
     LogLevel[LogLevel["Error"] = 5] = "Error";
 })(LogLevel || (LogLevel = {}));
 async function log(level, message, options) {
-    const traces = new Error().stack?.split("\n").map((line) => line.split("@"));
+    const traces = new Error().stack?.split('\n').map((line) => line.split('@'));
     const filtered = traces?.filter(([name, location]) => {
-        return name.length > 0 && location !== "[native code]";
+        return name.length > 0 && location !== '[native code]';
     });
     const { file, line, keyValues } = options ?? {};
-    let location = filtered?.[0]?.filter((v) => v.length > 0).join("@");
-    if (location === "Error") {
-        location = "webview::unknown";
+    let location = filtered?.[0]?.filter((v) => v.length > 0).join('@');
+    if (location === 'Error') {
+        location = 'webview::unknown';
     }
-    await core.invoke("plugin:log|log", {
+    await core.invoke('plugin:log|log', {
         level,
         message,
         location,
         file,
         line,
-        keyValues,
+        keyValues
     });
 }
 /**
@@ -156,14 +156,14 @@ async function trace(message, options) {
  * @returns a function to cancel the listener.
  */
 async function attachLogger(fn) {
-    return await event.listen("log://log", (event) => {
+    return await event.listen('log://log', (event) => {
         const { level } = event.payload;
         let { message } = event.payload;
         // Strip ANSI escape codes
         message = message.replace(
         // TODO: Investigate security/detect-unsafe-regex
         // eslint-disable-next-line no-control-regex, security/detect-unsafe-regex
-        /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");
+        /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
         fn({ message, level });
     });
 }
