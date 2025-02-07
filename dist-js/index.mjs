@@ -36,12 +36,12 @@ var LogLevel;
 })(LogLevel || (LogLevel = {}));
 async function log(level, message, options) {
     var _a, _b;
-    const traces = (_a = new Error().stack) === null || _a === undefined ? undefined : _a.split("\n").map((line) => line.split("@"));
-    const filtered = traces === null || traces === undefined ? undefined : traces.filter(([name, location]) => {
+    const traces = (_a = new Error().stack) === null || _a === void 0 ? void 0 : _a.split("\n").map((line) => line.split("@"));
+    const filtered = traces === null || traces === void 0 ? void 0 : traces.filter(([name, location]) => {
         return name.length > 0 && location !== "[native code]";
     });
-    const { file, line, keyValues } = options !== null && options !== undefined ? options : {};
-    let location = (_b = filtered === null || filtered === undefined ? undefined : filtered[0]) === null || _b === undefined ? undefined : _b.filter((v) => v.length > 0).join("@");
+    const { file, line, keyValues } = options !== null && options !== void 0 ? options : {};
+    let location = (_b = filtered === null || filtered === void 0 ? void 0 : filtered[0]) === null || _b === void 0 ? void 0 : _b.filter((v) => v.length > 0).join("@");
     if (location === "Error") {
         location = "webview::unknown";
     }
