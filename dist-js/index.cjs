@@ -6,7 +6,7 @@ var event = require('@tauri-apps/api/event');
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
-var LogLevel;
+exports.LogLevel = void 0;
 (function (LogLevel) {
     /**
      * The "trace" level.
@@ -38,7 +38,7 @@ var LogLevel;
      * Designates very serious errors.
      */
     LogLevel[LogLevel["Error"] = 5] = "Error";
-})(LogLevel || (LogLevel = {}));
+})(exports.LogLevel || (exports.LogLevel = {}));
 function getCallerLocation(stack) {
     if (!stack) {
         return;
@@ -117,7 +117,7 @@ async function log(level, message, options) {
  * ```
  */
 async function error(message, options) {
-    await log(LogLevel.Error, message, options);
+    await log(exports.LogLevel.Error, message, options);
 }
 /**
  * Logs a message at the warn level.
@@ -135,7 +135,7 @@ async function error(message, options) {
  * ```
  */
 async function warn(message, options) {
-    await log(LogLevel.Warn, message, options);
+    await log(exports.LogLevel.Warn, message, options);
 }
 /**
  * Logs a message at the info level.
@@ -153,7 +153,7 @@ async function warn(message, options) {
  * ```
  */
 async function info(message, options) {
-    await log(LogLevel.Info, message, options);
+    await log(exports.LogLevel.Info, message, options);
 }
 /**
  * Logs a message at the debug level.
@@ -171,7 +171,7 @@ async function info(message, options) {
  * ```
  */
 async function debug(message, options) {
-    await log(LogLevel.Debug, message, options);
+    await log(exports.LogLevel.Debug, message, options);
 }
 /**
  * Logs a message at the trace level.
@@ -189,7 +189,7 @@ async function debug(message, options) {
  * ```
  */
 async function trace(message, options) {
-    await log(LogLevel.Trace, message, options);
+    await log(exports.LogLevel.Trace, message, options);
 }
 /**
  * Attaches a listener for the log, and calls the passed function for each log entry.
@@ -217,19 +217,19 @@ async function attachLogger(fn) {
 async function attachConsole() {
     return await attachLogger(({ level, message }) => {
         switch (level) {
-            case LogLevel.Trace:
+            case exports.LogLevel.Trace:
                 console.log(message);
                 break;
-            case LogLevel.Debug:
+            case exports.LogLevel.Debug:
                 console.debug(message);
                 break;
-            case LogLevel.Info:
+            case exports.LogLevel.Info:
                 console.info(message);
                 break;
-            case LogLevel.Warn:
+            case exports.LogLevel.Warn:
                 console.warn(message);
                 break;
-            case LogLevel.Error:
+            case exports.LogLevel.Error:
                 console.error(message);
                 break;
             default:

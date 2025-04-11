@@ -4,7 +4,7 @@ export interface LogOptions {
     line?: number;
     keyValues?: Record<string, string | undefined>;
 }
-declare enum LogLevel {
+export declare enum LogLevel {
     /**
      * The "trace" level.
      *

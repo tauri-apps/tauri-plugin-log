@@ -237,4 +237,4 @@ async function attachConsole() {
     });
 }
 
-export { attachConsole, attachLogger, debug, error, info, trace, warn };
+export { LogLevel, attachConsole, attachLogger, debug, error, info, trace, warn };
