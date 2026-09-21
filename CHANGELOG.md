@@ -1,8 +1,16 @@
 # Changelog
 
+## [3.0.0-alpha.1]
+
+- [`15bf611d`](https://github.com/tauri-apps/plugins-workspace/commit/15bf611d68b15f343c0e8f6834a64d0cf2cc1637) Update to @tauri-apps/api v3.0.0-alpha.
+
 ## [3.0.0-alpha.0]
 
 - [`363438b5`](https://github.com/tauri-apps/plugins-workspace/commit/363438b50a09162379d57c7c7bfc132520c1e5d4) Update to tauri 3.0 alpha.
+
+## [2.9.2]
+
+- [`2df3d936`](https://github.com/tauri-apps/plugins-workspace/commit/2df3d9368187e1d2ce736d3e0b2d4bdcae35b011) ([#3574](https://github.com/tauri-apps/plugins-workspace/pull/3574)) Log webview log target locations after 2 colons instead of 1. (e.g. `webview:myFunction@http://localhost:5173/src/myFile.ts?t=1787480723620:47:4` to `webview::myFunction@http://localhost:5173/src/myFile.ts?t=1787480723620:47:4`)
 
 ## [2.9.1]
 
