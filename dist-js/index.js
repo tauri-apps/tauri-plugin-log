@@ -4,6 +4,14 @@ import { listen } from '@tauri-apps/api/event';
 // Copyright 2019-2023 Tauri Programme within The Commons Conservancy
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
+/**
+ * Configure the Tauri application log system, and access the JavaScript-side log functions.
+ *
+ * @module
+ */
+/**
+ * The verbosity level of a log entry, matching the levels of the Rust `log` crate.
+ */
 var LogLevel;
 (function (LogLevel) {
     /**
@@ -101,11 +109,8 @@ async function log(level, message, options) {
 /**
  * Logs a message at the error level.
  *
- * @param message
- *
- * # Examples
- *
- * ```js
+ * @example
+ * ```typescript
  * import { error } from '@tauri-apps/plugin-log';
  *
  * const err_info = "No connection";
@@ -113,6 +118,10 @@ async function log(level, message, options) {
  *
  * error(`Error: ${err_info} on port ${port}`);
  * ```
+ *
+ * @param message the message to log.
+ * @param options additional metadata (file, line, key-values) to attach to the log entry.
+ * @since 2.0.0
  */
 async function error(message, options) {
     await log(LogLevel.Error, message, options);
@@ -120,17 +129,18 @@ async function error(message, options) {
 /**
  * Logs a message at the warn level.
  *
- * @param message
- *
- * # Examples
- *
- * ```js
+ * @example
+ * ```typescript
  * import { warn } from '@tauri-apps/plugin-log';
  *
  * const warn_description = "Invalid Input";
  *
  * warn(`Warning! {warn_description}!`);
  * ```
+ *
+ * @param message the message to log.
+ * @param options additional metadata (file, line, key-values) to attach to the log entry.
+ * @since 2.0.0
  */
 async function warn(message, options) {
     await log(LogLevel.Warn, message, options);
@@ -138,17 +148,18 @@ async function warn(message, options) {
 /**
  * Logs a message at the info level.
  *
- * @param message
- *
- * # Examples
- *
- * ```js
+ * @example
+ * ```typescript
  * import { info } from '@tauri-apps/plugin-log';
  *
  * const conn_info = { port: 40, speed: 3.20 };
  *
  * info(`Connected to port {conn_info.port} at {conn_info.speed} Mb/s`);
  * ```
+ *
+ * @param message the message to log.
+ * @param options additional metadata (file, line, key-values) to attach to the log entry.
+ * @since 2.0.0
  */
 async function info(message, options) {
     await log(LogLevel.Info, message, options);
@@ -156,17 +167,18 @@ async function info(message, options) {
 /**
  * Logs a message at the debug level.
  *
- * @param message
- *
- * # Examples
- *
- * ```js
+ * @example
+ * ```typescript
  * import { debug } from '@tauri-apps/plugin-log';
  *
  * const pos = { x: 3.234, y: -1.223 };
  *
  * debug(`New position: x: {pos.x}, y: {pos.y}`);
  * ```
+ *
+ * @param message the message to log.
+ * @param options additional metadata (file, line, key-values) to attach to the log entry.
+ * @since 2.0.0
  */
 async function debug(message, options) {
     await log(LogLevel.Debug, message, options);
@@ -174,26 +186,40 @@ async function debug(message, options) {
 /**
  * Logs a message at the trace level.
  *
- * @param message
- *
- * # Examples
- *
- * ```js
+ * @example
+ * ```typescript
  * import { trace } from '@tauri-apps/plugin-log';
  *
  * let pos = { x: 3.234, y: -1.223 };
  *
  * trace(`Position is: x: {pos.x}, y: {pos.y}`);
  * ```
+ *
+ * @param message the message to log.
+ * @param options additional metadata (file, line, key-values) to attach to the log entry.
+ * @since 2.0.0
  */
 async function trace(message, options) {
     await log(LogLevel.Trace, message, options);
 }
 /**
  * Attaches a listener for the log, and calls the passed function for each log entry.
- * @param fn
  *
- * @returns a function to cancel the listener.
+ * @example
+ * ```typescript
+ * import { attachLogger } from '@tauri-apps/plugin-log';
+ *
+ * const detach = await attachLogger(({ level, message }) => {
+ *   console.log(`[${level}] ${message}`);
+ * });
+ *
+ * // detach the listener later
+ * detach();
+ * ```
+ *
+ * @param fn a function to call for every log entry emitted by the Rust side.
+ * @returns a promise resolving to a function to cancel the listener.
+ * @since 2.0.0
  */
 async function attachLogger(fn) {
     return await listen('log://log', (event) => {
@@ -210,7 +236,18 @@ async function attachLogger(fn) {
 /**
  * Attaches a listener that writes log entries to the console as they come in.
  *
- * @returns a function to cancel the listener.
+ * @example
+ * ```typescript
+ * import { attachConsole } from '@tauri-apps/plugin-log';
+ *
+ * const detach = await attachConsole();
+ *
+ * // detach the listener later
+ * detach();
+ * ```
+ *
+ * @returns a promise resolving to a function to cancel the listener.
+ * @since 2.0.0
  */
 async function attachConsole() {
     return await attachLogger(({ level, message }) => {
